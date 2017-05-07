@@ -1,0 +1,62 @@
+<launch>
+	<node pkg="dji_sdk" type="dji_sdk_node" name="dji_sdk" output="screen">
+		<!-- node parameters -->
+		<param name="serial_name" type="string" value="/dev/ttyUSB0"/>
+		<param name="baud_rate" type="int" value="230400"/>
+		<param name="app_id" type="int" value="1038214"/>
+		<param name="app_version" type="int" value="1"/>
+		<param name="app_bundle_id" type="string" value="Not required in this SDK version"/>
+		<param name="enc_key" type="string" value="34a13db632288c664b4d05213097e9166487edc10cefe442a48fd924847a4fdf"/>
+		<param name="groundstation_enable" type="int" value="1"/>
+	</node>
+	
+	<node pkg="dji_sdk_read_cam" type="dji_sdk_read_cam" name="dji_sdk_read_cam" output="screen" launch-prefix="xterm -e">
+		<!-- node parameters -->
+		<param name="gray_or_rgb" type="int" value="1"/>
+		<param name="to_mobile" type="int" value="1"/>
+	</node>
+
+	<node
+		pkg="move_dji"
+		type="location"
+		name="publish_location"
+		output="screen"	
+		launch-prefix="xterm -e"	
+	/>
+	
+	<node
+		pkg="move_dji"
+		type="move_dji"
+		name="nove_dji"
+		output="screen"
+		launch-prefix="xterm -e"		
+	/>
+
+	
+	<node
+		pkg="dji_sdk_read_cam"
+		type="HoughCircle"
+		name="HoughCircle_node"
+		output="screen"	
+		launch-prefix="xterm -e"	
+	/>
+
+	<node
+		pkg="dji_sdk_read_cam"
+		type="runtracker"
+		name="runtracker_node"
+		output="screen"	
+		launch-prefix="xterm -e"
+	/>
+
+
+	<node pkg="dji_sdk_read_cam"  type="dji_sdk_read_cam"  name="dji_sdk_read_cam" >
+		<!-- node parameters -->
+		<param name="gray_or_rgb" type="int" value="1"/>
+		<param name="to_mobile" type="int" value="1"/>
+	</node>
+
+
+
+
+</launch>
