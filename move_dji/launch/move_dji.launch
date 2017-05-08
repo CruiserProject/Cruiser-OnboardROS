@@ -1,20 +1,12 @@
 <launch>
-
 	<include file="$(find dji_sdk)/launch/sdk_manifold.launch"/>
 
 
-	<node
-		pkg="move_dji"
-		type="location"
-		output="screen"	
-		name="publish_location"
-		launch-prefix="xterm -e"
-	/>	
 
 	<node
 		pkg="move_dji"
 		type="move_dji"
-		name="nove_dji"
+		name="move_dji"
 		output="screen"	
 		launch-prefix="xterm -e"	
 	/>
