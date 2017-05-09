@@ -24,103 +24,159 @@
 #include "cv.h"
 #include "highgui.h"
 #include "djicam.h"
+#include "move_dji/location.h"
+#include <dji_sdk/dji_drone.h>
+
 using namespace std;
 using namespace cv;
+
 Mat srcImage;
+float height;//定义全局变量，获取当前飞行高度
+move_dji::location new_delta;
 static const std::string OPENCV_WINDOW = "landpoint";
+
+//坐标转换函数
+void land_coord_cal(float &x,float &y)
+{       
+	float sensor_weight=6.17;//相机传感器尺寸数据
+	float sensor_height=4.55;
+	float focal_length=20;//相机等效焦距
+	float optic_angle=94;//相机视角
+	
+	x=(sensor_weight*0.001/2-x*sensor_weight*0.001)/(focal_length*0.001/height);
+	y=(sensor_height*0.001/2-y*sensor_height*0.001)/(focal_length*0.001/height);
+	ROS_INFO_STREAM("delta_X = "<< x << " delta_Y = " << y);
+
+}
+
+void global_Call_back(dji_sdk::GlobalPosition h)
+{
+	height=h.altitude;
+	ROS_INFO("height=%f",height);
+}
 
 class ImageConverter
 {
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
-  image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
+	ros::NodeHandle nh_;
+	image_transport::ImageTransport it_;
+	image_transport::Subscriber image_sub_;
+	image_transport::Publisher image_pub_;
+	
+	
+	ros::Subscriber Height;
+	ros::Publisher delta_location;
+	
+	public:
+		ImageConverter() : it_(nh_)
+		{
+			// Subscrive to input video feed and publish output video feed
+			image_sub_ = it_.subscribe("/dji_sdk/image_raw", 1,&ImageConverter::imageCb, this);
+			Height=nh_.subscribe("/dji_sdk/global_position",1,&global_Call_back);
+			delta_location=nh_.advertise<move_dji::location>("location",3);
+			// image_pub_ = it_.advertise("/image_converter/output_video", 1);
+			cv::namedWindow(OPENCV_WINDOW);
+		}
 
-public:
-  ImageConverter() : it_(nh_)
-  {
-    // Subscrive to input video feed and publish output video feed
-    image_sub_ = it_.subscribe("/dji_sdk/image_raw", 1,&ImageConverter::imageCb, this);
-   // image_pub_ = it_.advertise("/image_converter/output_video", 1);
-
-    cv::namedWindow(OPENCV_WINDOW);
-  }
-
-  ~ImageConverter()
-  {
-    cv::destroyWindow(OPENCV_WINDOW);
-  }
-
-  void imageCb(const sensor_msgs::ImageConstPtr& msg)
-  {
-    cv_bridge::CvImagePtr cv_ptr;
-    try
-    {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
-      return;
-    }
-
-  
-        
-       srcImage=cv_ptr->image.clone();
-        Mat midImage;//临时变量和目标图的定义
-        //转为灰度图，进行图像平滑
-        cvtColor(srcImage,midImage, CV_BGR2GRAY);//转化边缘检测后的图为灰度图
-        GaussianBlur( midImage, midImage, Size(9, 9), 2, 2 );
-
-        //进行霍夫圆变换
-        vector<Vec3f> circles;
-        HoughCircles( midImage, circles, CV_HOUGH_GRADIENT,1.5, 10, 200, 100, 0, 0 );
-
-        float  add_pointx = 0, add_pointy = 0; int size, add_radius = 0;
-        for( size_t i = 0; i < circles.size(); i++ )
-        {
-
-            Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
-            int radius = cvRound(circles[i][2]);
-            add_radius += radius;
-            add_pointx += cvRound(circles[i][0]);
-            add_pointy += cvRound(circles[i][1]);
-
-          //  circle( srcImage, center, 3, Scalar(0,255,255), -1, 8, 0 );
-
-           // circle( srcImage, center, radius, Scalar(155,50,255), 3, 8, 0 );
-            size = i;
-        }
-            int radius = add_radius / (size + 1);
-            float x = add_pointx / (size + 1);
-            float y = add_pointy / (size + 1);
-            if(x==0&&y==0)
-                cout<<"do not detect circle!"<<endl;
-            else
-            {
-                Point center(x, y);
-            cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
-            circle(srcImage, center, 3, Scalar(0, 59, 255), -1, 8, 0);
-            circle(srcImage, center, radius, Scalar(155, 50, 20), 3, 8, 0);
-            }
-            //【6】显示效果图
-           // imshow("camera", srcImage);
-       // waitKey(30);
+		~ImageConverter()
+		{
+			cv::destroyWindow(OPENCV_WINDOW);
+		}
    
-    // Update GUI Window
-    //cv::imshow(OPENCV_WINDOW, cv_ptr->image);
-    cv::imshow(OPENCV_WINDOW, srcImage);
-    cv::waitKey(3);
-    // Output modified video stream
-    image_pub_.publish(cv_ptr->toImageMsg());
-  }
+		void imageCb(const sensor_msgs::ImageConstPtr& msg)
+		{
+			cv_bridge::CvImagePtr cv_ptr;
+			sensor_msgs::Image im;
+			
+			try
+			{
+				cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+			}
+			catch (cv_bridge::Exception& e)
+			{
+//				ROS_ERROR("cv_bridge exception: %s", e.what());
+//				ROS_ERROR("cv_bridge exception: %s", e.what());
+
+				return;
+			}
+
+			srcImage=cv_ptr->image.clone();
+			Mat midImage;//临时变量和目标图的定义
+			cvtColor(srcImage,midImage, CV_BGR2GRAY);//转化边缘检测后的图为灰度图
+			GaussianBlur( midImage, midImage, Size(9, 9), 2, 2 );
+	
+			vector<Vec3f> circles;
+			HoughCircles( midImage, circles, CV_HOUGH_GRADIENT,1.5, 10, 200, 100, 0, 0 );
+	
+			float  add_pointx = 0, add_pointy = 0; int size, add_radius = 0;
+			for( size_t i = 0; i < circles.size(); i++ )
+			{
+			    Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+				int radius = cvRound(circles[i][2]);
+				add_radius += radius;
+				add_pointx += cvRound(circles[i][0]);
+				add_pointy += cvRound(circles[i][1]);
+	
+				// circle( srcImage, center, 3, Scalar(0,255,255), -1, 8, 0 );
+
+				// circle( srcImage, center, radius, Scalar(155,50,255), 3, 8, 0 );
+				size = i;
+			}
+			
+			int radius = add_radius / (size + 1);
+			float x = add_pointx / (size + 1);
+			float y = add_pointy / (size + 1);
+			
+			if(x==0&&y==0)
+			{
+				cout<<"do not detect circle!"<<endl;
+				ROS_INFO_STREAM("do not detect circle!.");
+				new_delta.flag=false;
+			}
+			else
+			{
+				new_delta.flag=true;
+				ROS_INFO_STREAM("Detect circle.");
+				Point center(x, y);
+				cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
+				circle(srcImage, center, 3, Scalar(0, 59, 255), -1, 8, 0);
+				circle(srcImage, center, radius, Scalar(155, 50, 20), 3, 8, 0);
+				
+				//计算实际坐标（相对位移）
+				int X=srcImage.cols;
+				int Y=srcImage.rows;
+			
+				x=x/X;//转换为比例
+				y=y/Y;
+				land_coord_cal(x,y);
+			
+				new_delta.delta_X=x;
+				new_delta.delta_Y=y;
+			}
+				
+			cv::imshow(OPENCV_WINDOW, srcImage);
+			cv::waitKey(3);
+			// Output modified video stream
+			cv_ptr->image=srcImage;
+			cv_ptr->toImageMsg(im);
+			
+			image_pub_.publish(im);
+			
+			//image_pub_.publish(srcImage.toImageMsg());
+			
+   			//ROS_INFO_STREAM("delta_X = "<< new_delta.delta_X << " delta_Y = " << new_delta.delta_Y <<" delta_flag ="<< new_delta.flag);
+			delta_location.publish(new_delta);//发布坐标消息
+		}		
 };
 
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "image_converter");
   ImageConverter ic;
-  ros::spin();
+  while(ros::ok())
+  {
+    ros::spinOnce();
+  }
+
   return 0;
 }
 

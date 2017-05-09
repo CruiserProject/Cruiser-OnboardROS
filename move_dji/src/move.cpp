@@ -7,8 +7,10 @@
 #include <actionlib/client/simple_action_client.h>
 #include <actionlib/client/terminal_state.h>
 #include <move_dji/location.h>
+
 #include "dji_sdk_lib/DJI_API.h"
 #include "dji_sdk_lib/DJICommonType.h"
+
 #include <dji_sdk/dji_sdk_node.h>
 #include <dji_sdk/TransparentTransmissionData.h>
 #include <dji_sdk/LocalPosition.h>
@@ -29,7 +31,7 @@ void TakePhotoMobileCallback(DJIDrone *drone);
 void StartVideoMobileCallback(DJIDrone *drone);
 void StopVideoMobileCallback(DJIDrone *drone);
 
-void DeltaMsgCallback(const move_dji::location& new_location);
+//void DeltaMsgCallback(const move_dji::location& new_location);
 void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition);
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
 
@@ -43,36 +45,48 @@ float Height;
 
 int main(int argc,char **argv)
 {
-  ros::init(argc,argv,"move_dji");
+	ros::init(argc,argv,"move_dji");
 	ros::NodeHandle nh;
 	drone = new DJIDrone(nh);
 	rosAdapter = new DJI::onboardSDK::ROSAdapter;
 
-  ros::Subscriber DeltaMsg = nh.subscribe("location",1000,&DeltaMsgCallback);
+	//ros::Subscriber DeltaMsg = nh.subscribe("location",1000,&DeltaMsgCallback);
 	uint8_t testdata = 97;
 	uint8_t len = sizeof(testdata);
-  rosAdapter->init("/dev/ttyUSB0",230400);
+	rosAdapter->init("/dev/ttyUSB0",230400);
 
-  if(!drone->request_sdk_permission_control())
-    ROS_INFO("Get permission control Error!");
+	if(!drone->request_sdk_permission_control())
+		ROS_INFO("Get permission control Error!");
+	ROS_INFO("A");
 
-  rosAdapter->sendToMobile(&testdata,len);
+	/*Test part*/
+	if(!drone->takeoff())
+		ROS_INFO("Takeoff Error!");
 
- //   ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1000,&LocalPositionCallback);
+	for(int i = 0;i < 20; i++)
+	{
+		drone->attitude_control(0x40,0,0,3,0);
+		usleep(20000);
+	}
+	/*Test part end*/
+
+	rosAdapter->sendToMobile(&testdata,len);
+    ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1000,&LocalPositionCallback);
     ros::Subscriber MobileMsg = nh.subscribe("/dji_sdk/data_received_from_remote_device",1,&GetMobileMsgCallback);
     ros::Rate rate(1);
 
     while(ros::ok())
     {
-//      	if(alti_flag||delta_pos)
-//    	{
-//    		drone->landing();
-//    		drone->release_sdk_permission_control();
-//    	}
+      	if(alti_flag||delta_pos)
+    	{
+    		drone->landing();
+    		drone->release_sdk_permission_control();
+    	}
         ros::spinOnce();
         rate.sleep();
     }
 }
+
 
 void DeltaMsgCallback(const move_dji::location& new_location)
 {
@@ -126,6 +140,8 @@ void DeltaMsgCallback(const move_dji::location& new_location)
 */
 }
 
+
+
 void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 {
 	long int during = 500000;
@@ -151,17 +167,17 @@ void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData)
 {
-//	int i=0;
+	int i=0;
 //	for(i = 0;i < len;i++)
 	//{
 		//ROS_INFO("%c",transparent_transmission_data.data[i]);
 	//}
 	//ROS_INFO("\n");
-//	while(mobileData.data[i]!='')
-//	{
-//		ROS_INFO_STREAM(mobileData.data[i++]);
-//	}
-	ROS_INFO_STREAM(mobileData.data[0]);
+	while(mobileData.data[i]!= 0 )
+	{
+		ROS_INFO_STREAM(mobileData.data[i++]);
+	}
+//	ROS_INFO_STREAM(mobileData.data[0]);
 	ROS_INFO_STREAM("END");
 }
 
