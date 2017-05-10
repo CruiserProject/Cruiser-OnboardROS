@@ -9,10 +9,10 @@
 #include "dji_sdk_lib/DJI_API.h"
 #include "dji_sdk_lib/DJICommonType.h"
 #include <dji_sdk/dji_sdk_node.h>
-#include <dji_sdk/TransparentTransmissionData.h>
+//#include <dji_sdk/TransparentTransmissionData.h>
 #include <dji_sdk/LocalPosition.h>
-#include <cruiser/LandingMove.h>
-#include <cruiser/LandingFlag.h>
+#include <cruiser/DeltaPosition.h>
+#include <cruiser/Flag.h>
 
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -30,11 +30,11 @@ void TakePhotoMobileCallback(DJIDrone *drone);
 void StartVideoMobileCallback(DJIDrone *drone);
 void StopVideoMobileCallback(DJIDrone *drone);
 
-void DeltaMsgCallback(const cruiser::LandingMove& new_location);
-void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition);
-void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
-void MissionFlagCallback(const cruiser::LandingFlag& landingFlag);
 
+void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition);
+
+void MissionFlagCallback(const cruiser::Flag& landingFlag);
+void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 DJIDrone *drone;
 DJI::onboardSDK::ROSAdapter *rosAdapter;
 
@@ -81,7 +81,6 @@ int main(int argc,char **argv)
 
     	ROS_INFO("D");
 
-        ros::Subscriber MobileMsg = nh.subscribe("/dji_sdk/data_received_from_remote_device",1,&GetMobileMsgCallback);
     	ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1,&LocalPositionCallback);
         ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaMsgCallback);
     }
@@ -102,7 +101,7 @@ int main(int argc,char **argv)
     }
 }
 
-void DeltaMsgCallback(const cruiser::LandingMove& new_location)
+void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
 
 	if (new_location.flag)
@@ -177,24 +176,10 @@ void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 	else alti_flag = 1;
 }
 
-void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData)
-{
-	int i=0;
-//	for(i = 0;i < len;i++)
-	//{
-		//ROS_INFO("%c",transparent_transmission_data.data[i]);
-	//}
-	//ROS_INFO("\n");
-	while(mobileData.data[i]!= 0 )
-	{
-		ROS_INFO_STREAM(mobileData.data[i++]);
-	}
-//	ROS_INFO_STREAM(mobileData.data[0]);
-	ROS_INFO_STREAM("END");
-}
 
 
-void MissionFlagCallback(const cruiser::LandingFlag& landingFlag)
+
+void MissionFlagCallback(const cruiser::Flag& landingFlag)
 {
 	Mission_flag = landingFlag.flag;
 }
