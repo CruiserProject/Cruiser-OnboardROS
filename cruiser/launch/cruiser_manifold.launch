@@ -2,8 +2,8 @@
 	<node
 		pkg="dji_sdk_read_cam"
 		type="dji_sdk_read_cam"
-		name="dji_sdk_read_cam"
-	>
+		name="dji_sdk_read_cam"     >
+		
 		<!-- node parameters -->
 		<param name="gray_or_rgb" type="int" value="1"/>
 		<param name="to_mobile" type="int" value="1"/>
@@ -12,21 +12,34 @@
 	<include file="$(find cruiser_activate)/launch/activate_manifold.launch"/>
 	
 	<node
-		pkg="move_dji"
-		type="move_dji"
-		name="move_dji"
+		pkg="cruiser"
+		type="mobile_msg"
+		name="mobile_msg"
 	/>
 	
 	<node
-		pkg="dji_sdk_read_cam"
-		type="HoughCircle"
-		name="HoughCircle_node"
+		pkg="cruiser_lib"
+		type="landing_alg_node"
+		name="landing_alg_node"
 	/>
 	
-    <node
-		pkg="dji_sdk_read_cam"
-		type="runtracker"
-		name="runtracker_node"
+	<node
+		pkg="cruiser_lib"
+		type="tracking_alg_node"
+		name="tracking_alg_node"
 	/>
+	
+	<node
+		pkg="cruiser_landing"
+		type="landing_move_node"
+		name="landing_move_node"
+	/>
+	
+	<node
+		pkg="cruiser_tracking"
+		type="tracking_move_node"
+		name="tracking_move_node"
+	/>
+	
 </launch>
 

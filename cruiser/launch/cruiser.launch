@@ -13,25 +13,43 @@
 	<include file="$(find cruiser_activate)/launch/activate_laptop.launch"/>
 	
 	<node
-		pkg="move_dji"
-		type="move_dji"
-		name="move_dji"
+		pkg="cruiser"
+		type="mobile_msg"
+		name="mobile_msg"
 		output="screen"	
 		launch-prefix="xterm -e"	
 	/>
+	
 	<node
-		pkg="dji_sdk_read_cam"
-		type="HoughCircle"
-		name="HoughCircle_node"
+		pkg="cruiser_lib"
+		type="landing_alg_node"
+		name="landing_alg_node"
 		output="screen"	
 		launch-prefix="xterm -e"	
 	/>
-    <node
-		pkg="dji_sdk_read_cam"
-		type="runtracker"
-		name="runtracker_node"
+	
+	<node
+		pkg="cruiser_lib"
+		type="tracking_alg_node"
+		name="tracking_alg_node"
 		output="screen"	
-		launch-prefix="xterm -e"
+		launch-prefix="xterm -e"	
+	/>
+	
+	<node
+		pkg="cruiser_landing"
+		type="landing_move_node"
+		name="landing_move_node"
+		output="screen"	
+		launch-prefix="xterm -e"	
+	/>
+	
+	<node
+		pkg="cruiser_tracking"
+		type="tracking_move_node"
+		name="tracking_move_node"
+		output="screen"	
+		launch-prefix="xterm -e"	
 	/>
 </launch>
 
