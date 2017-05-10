@@ -1,4 +1,4 @@
-float32 upperleft_width_percent
-float32 upperleft_height_percent
-float32 lowerright_width_percent
-float32 lowerright_height_percent
+float32 a_width_percent
+float32 a_height_percent
+float32 b_width_percent
+float32 b_height_percent

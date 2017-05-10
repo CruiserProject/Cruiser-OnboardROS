@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 find_package(catkin REQUIRED COMPONENTS
   dji_sdk
   rospy
+  roscpp
   std_msgs
   message_generation
 )
@@ -140,6 +141,10 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/cruiser_node.cpp)
+
+add_executable(mobile_msg src/mobile_msg.cpp)
+target_link_libraries(mobile_msg ${catkin_LIBRARIES})
+add_dependencies(mobile_msg cruiser_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
