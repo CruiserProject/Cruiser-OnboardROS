@@ -1,10 +1,9 @@
-#include<ros/ros.h>
+#include <ros/ros.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
-#include "ros/ros.h"
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
@@ -22,42 +21,36 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include </usr/include/opencv/cv.h>   //changed path
-#include <opencv2/highgui/highgui.hpp>     //changed path
-#include "djicam.h"
+#include </home/ubuntu/SAGACIOUS_EAGLE/src/Cruiser-OnboardROS/dji_sdk_read_cam/include/djicam.h>   //changed path
 
 #include <dji_sdk/LocalPosition.h>
 #include <cruiser/Flag.h>
-#include <dji_sdk/dji_drone.h>
+#include <cruiser/DeltaPosition.h>
+//#include <dji_sdk/dji_drone.h>
 
 using namespace std;
 using namespace cv;
 
 Mat srcImage;
-float height;//定义全局变量，获取当前飞行高度
 cruiser::DeltaPosition deltaPosition;
+
+const float sensor_weight=6.17;//相机传感器尺寸数据
+const float sensor_height=4.55;
+const float focal_length=20;//相机等效焦距
+const float optic_angle=94;//相机视角
+
+float height;//定义全局变量，获取当前飞行高度
 static const std::string OPENCV_WINDOW = "landpoint";
 bool flag=false;
-//corordinate transform
-void land_coord_cal(float &x,float &y)
-{
-	float sensor_weight=6.17;//相机传感器尺寸数据
-	float sensor_height=4.55;
-	float focal_length=20;//相机等效焦距
-	float optic_angle=94;//相机视角
-
-	x=(sensor_weight*0.001/2-x*sensor_weight*0.001)/(focal_length*0.001/height);
-	y=(sensor_height*0.001/2-y*sensor_height*0.001)/(focal_length*0.001/height);
-	ROS_INFO_STREAM("delta_X = "<< x << " delta_Y = " << y);
-}
 
 //get the local height of drone
-void localPositionCallback(dji_sdk::LocalPosition h)
+void localPositionCallback(const dji_sdk::LocalPosition& h)
 {
 	height=h.z;
 }
 
 //get the flag which depends whether to execute the houghcircle programme
-void landingFlagCallback(cruiser::Flag &msg)
+void landingFlagCallback(const cruiser::Flag& msg)
 {
 	flag=msg.flag;
 }
@@ -108,7 +101,7 @@ class ImageConverter
 			}
 
 			if(flag)
-			｛
+			{
 				srcImage=cv_ptr->image.clone();
 				Mat midImage;//临时变量和目标图的定义
 				cvtColor(srcImage,midImage, CV_BGR2GRAY);//转化边缘检测后的图为灰度图
@@ -147,7 +140,7 @@ class ImageConverter
 				}
 				else
 				{
-					deltaPosition.flag=true;//if any circle is detected,the state should be true
+					deltaPosition.state=true;//if any circle is detected,the state should be true
 					ROS_INFO_STREAM("Detect circle.");
 					Point center(x, y);
 					cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
@@ -158,9 +151,13 @@ class ImageConverter
 					int X=srcImage.cols;
 					int Y=srcImage.rows;
 
-					x=x/X;//转换为比例
+					//corordinate transform
+					x=x/X;
 					y=y/Y;
-					land_coord_cal(x,y);
+					
+					x=(sensor_weight*0.001/2-x*sensor_weight*0.001)/(focal_length*0.001/height);
+					y=(sensor_height*0.001/2-y*sensor_height*0.001)/(focal_length*0.001/height);
+					ROS_INFO_STREAM("delta_X_meter = "<< x << " delta_Y_meter = " << y);
 
 					deltaPosition.delta_X_meter=x;
 					deltaPosition.delta_Y_meter=y;
@@ -179,7 +176,7 @@ class ImageConverter
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "image_converter");
+  ros::init(argc, argv, "landing_alg_node");
   ImageConverter ic;
   while(ros::ok())
   {

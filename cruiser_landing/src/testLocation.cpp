@@ -19,11 +19,11 @@ int main(int argc,char **argv)
 	while(ros::ok())
 	{
 		cruiser::DeltaPosition new_location;
-		new_location.delta_X = 10 * double(rand())/double(RAND_MAX) - 5;
-		new_location.delta_Y = 10 * double(rand())/double(RAND_MAX) - 5;
+		new_location.delta_X_meter = 10 * double(rand())/double(RAND_MAX) - 5;
+		new_location.delta_Y_meter = 10 * double(rand())/double(RAND_MAX) - 5;
 		pub_deltalocaion.publish(new_location);
 
-		ROS_INFO_STREAM("delta_x = "<<new_location.delta_X<<" delta_y = "<<new_location.delta_Y);
+		ROS_INFO_STREAM("delta_x = "<<new_location.delta_X_meter<<" delta_y = "<<new_location.delta_Y_meter);
 		rate_pub.sleep();
 	}
 }

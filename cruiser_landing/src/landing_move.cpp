@@ -63,10 +63,10 @@ int main(int argc,char **argv)
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
 
-	if (new_location.flag)
+	if (new_location.state)
 	{
-		float Velocity_X = new_location.delta_X;
-		float Velocity_Y = new_location.delta_Y;
+		float Velocity_X = new_location.delta_X_meter;
+		float Velocity_Y = new_location.delta_Y_meter;
 		for(int i = 0;i < 20; i++)
 		{
 			drone->attitude_control(0x40,Velocity_X,Velocity_Y,0,0);//水平速度
@@ -74,9 +74,9 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 		}
 
 		ROS_INFO_STREAM(std::setprecision(2) << std::fixed
-				<< "position = (" << new_location.delta_X << "," << new_location.delta_Y << ")");
+				<< "position = (" << new_location.delta_X_meter << "," << new_location.delta_Y_meter << ")");
 
-		if((new_location.delta_X < 0.2) && (new_location.delta_Y < 0.2)&&(Height < 1.9))
+		if((new_location.delta_X_meter < 0.2) && (new_location.delta_Y_meter < 0.2)&&(Height < 1.9))
 			delta_pos = 1;
 	}
 /*

@@ -1,6 +1,7 @@
-#include "ros/ros.h"
+#include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
+#include <opencv2/highgui/highgui.hpp>
 #include <sensor_msgs/image_encodings.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <sys/stat.h>
@@ -15,8 +16,7 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include </usr/include/opencv/cv.h>   //changed path
-#include <opencv2/highgui/highgui.hpp>     //changed path
+#include </usr/include/opencv/cv.h>  //changed path
 #include "djicam.h"
 
 typedef unsigned char   BYTE;

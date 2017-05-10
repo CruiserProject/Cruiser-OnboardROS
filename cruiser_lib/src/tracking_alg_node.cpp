@@ -1,10 +1,9 @@
-#include　<ros/ros.h>
-#include "kcftracker.hpp"
+#include <ros/ros.h>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-#include　<iostream>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -25,14 +24,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include </usr/include/opencv/cv.h>   //changed path
-#include <opencv2/highgui/highgui.hpp>     //changed path
-#include "djicam.h"
-#include <dji_sdk/dji_drone.h>
+#include </home/ubuntu/SAGACIOUS_EAGLE/src/Cruiser-OnboardROS/dji_sdk_read_cam/include/djicam.h>   //changed path
+//#include <dji_sdk/dji_drone.h>
 
 #include <cruiser/TrackingPosition.h>
 #include <cruiser/Flag.h>
 #include <cruiser/DeltaPosition.h>
 #include <dji_sdk/LocalPosition.h>
+
+#include "kcftracker.hpp"
 
 using namespace std;
 using namespace cv;
@@ -52,11 +52,16 @@ bool gotBB = false;
 //my own data
 float height;
 bool flag=false;
+bool flags=false;
+bool state=true;
+float x_lt=0,y_lt=0,x_rb=0,y_rb=0;
+
 bool HOG = true;
 bool FIXEDWINDOW = false;
 bool MULTISCALE = true;
 bool SILENT = false;
 bool LAB = false;
+
 KCFTracker tracker;
 Rect result;
 //above are all global
@@ -64,7 +69,7 @@ Rect box;
 Mat capture;
 static const std::string OPENCV_WINDOW = "tracking";
 
-void trackingCoordCal(float x,float y,float &delta_x,float &delta_y)
+void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 {
 	float real_x=0;
 	float real_y=0;
@@ -81,9 +86,9 @@ void trackingCoordCal(float x,float y,float &delta_x,float &delta_y)
 	real_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*sin(degree-atan((y-v0)/fy))));
 	real_y=height/tan(degree-atan((y-v0)/fy));
 
-  //将计算所得位置赋予delta_x,delta_y
-  delta_x=real_x;
-  delta_y=real_y;
+	//将计算所得位置赋予delta_x,delta_y
+	delta_x=real_x;
+	delta_y=real_y;
 }
 /*void drawBox(Mat& image, CvRect box, Scalar color, int thick)
 {
@@ -127,52 +132,19 @@ void mouseHandler(int event, int x, int y, int flags, void *param)
 }
 */
 //get drone's global height,height in this function is a global variable
-void localPositionCallBack(dji_sdk::LocalPosition &h)
+void localPositionCallBack(const dji_sdk::LocalPosition &h)
 {
   height=h.z;
 }
 
-class ImageConverter
+
+void getFlagCb(const cruiser::Flag &msg)
 {
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
-  image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
+  flags=msg.flag;
+}
 
-	ros::Subscriber	tracking_flag;
-	ros::Subscriber rect_sub;
-	ros::Subscriber Height;
-	ros::Publisher pub;
-  cruiser::DeltaPosition deltaPosition;
-
-  bool flags;
-  bool state=true;
-	float x_lt=0,y_lt=0,x_rb=0,y_rb=0;
-
-	public:
-  	ImageConverter():it_(nh_)
-  	{
-    	// Subscribe to input video feed and publish output video feed
-    	image_sub_ = it_.subscribe("/dji_sdk/image_raw", 1,&ImageConverter::imageCb, this);
-			rect_sub = it_.subscribe("cruiser/tracking_position", 1,&getPositionCb);
-   	  tracking_flag=it_.subscribe("cruiser/tracking_flag",1,&getFlagCb);
-      Height=nh_.subscribe("/dji_sdk/local_position",1,&localPositionCallBack);
-      pub=nh_.advertise<cruiser::DeltaPosition>("cruiser/tracking_move",1);
-    	cv::namedWindow(OPENCV_WINDOW);
-  	}
-
-  	~ImageConverter()
-  	{
-    	cv::destroyWindow(OPENCV_WINDOW);
-  	}
-
-    void getFlagCb(const cruiser::Flag &msg)
-		{
-			 flags=msg.flag;
-		}
-
-		void getPositionCb(const cruiser::TrackingPosition &msg)
-		{
+void getPositionCb(const cruiser::TrackingPosition &msg)
+{
       if(flags)
       {
         if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
@@ -205,7 +177,39 @@ class ImageConverter
         }
         flag=true;
       }
-    }
+}
+
+class ImageConverter
+{
+  ros::NodeHandle nh_;
+  image_transport::ImageTransport it_;
+  image_transport::Subscriber image_sub_;
+  image_transport::Publisher image_pub_;
+
+  ros::Subscriber tracking_flag;
+  ros::Subscriber rect_sub;
+  ros::Subscriber Height;
+  ros::Publisher pub;
+  cruiser::DeltaPosition deltaPosition;
+
+
+	public:
+  	ImageConverter():it_(nh_)
+  	{
+      // Subscribe to input video feed and publish output video feed
+      image_sub_ = it_.subscribe("/dji_sdk/image_raw", 1,&ImageConverter::imageCb, this);
+      
+      rect_sub = nh_.subscribe("cruiser/tracking_position", 1,&getPositionCb);
+   	  tracking_flag=nh_.subscribe("cruiser/tracking_flag",1,&getFlagCb);
+      Height=nh_.subscribe("/dji_sdk/local_position",1,&localPositionCallBack);
+      pub=nh_.advertise<cruiser::DeltaPosition>("cruiser/tracking_move",1);
+      cv::namedWindow(OPENCV_WINDOW);
+  	}
+
+  	~ImageConverter()
+  	{
+    	cv::destroyWindow(OPENCV_WINDOW);
+  	}
 
   	void imageCb(const sensor_msgs::ImageConstPtr& msg)
   	{
@@ -270,8 +274,8 @@ class ImageConverter
 int main(int argc, char** argv)
 {
  	 ros::init(argc, argv, "tracking_alg_node");
-   ImageConverter ic;
-   cvSetMouseCallback("tracking", mouseHandler, NULL);
+     ImageConverter ic;
+     //cvSetMouseCallback("tracking", mouseHandler, NULL);
 
 	 // Create KCFTracker object
 	 tracker=KCFTracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
