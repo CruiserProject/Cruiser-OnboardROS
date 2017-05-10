@@ -1,3 +1,9 @@
+/*
+ * tracking_move.cpp
+ *
+ *  Created on: May 10, 2017
+ *      Author: cj
+ */
 #include <ros/ros.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -16,7 +22,6 @@
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
-void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition);
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 
 DJIDrone *drone;
@@ -25,31 +30,21 @@ DJI::onboardSDK::ROSAdapter *rosAdapter;
 int alti_flag = 0;
 int delta_pos = 0;
 float Height;
-
+float Height_Last;
 
 int main(int argc,char **argv)
 {
-	ros::init(argc,argv,"landing_move_node");
+	ros::init(argc,argv,"tracking_move_node");
 	ros::NodeHandle nh;
 
 	drone = new DJIDrone(nh);
-//	rosAdapter = new DJI::onboardSDK::ROSAdapter;
-
-	if(!drone->request_sdk_permission_control())
-		ROS_INFO("Get permission control Error!");
+	if(drone->request_sdk_permission_control())
+		ROS_INFO("Get permission control Correct!");
 	ROS_INFO("A");
 
-//	uint8_t testdata = 97;
-//	uint8_t len = sizeof(testdata);
-//	rosAdapter->init("/dev/ttyUSB0",230400);//can not locate it before request_permission_control
-//	rosAdapter->sendToMobile(&testdata,len);
+	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/tracking_move",1,&DeltaMsgCallback);
 
-	ROS_INFO("D");
-
-	ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1,&LocalPositionCallback);
-	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaMsgCallback);
-
-    ros::Rate rate(10);
+    ros::Rate rate(1);
     while(ros::ok())
     {
       	if(alti_flag||delta_pos)
@@ -75,12 +70,8 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 			drone->attitude_control(0x40,Velocity_X,Velocity_Y,0,0);//水平速度
 			usleep(20000);
 		}
-
 		ROS_INFO_STREAM(std::setprecision(2) << std::fixed
 				<< "position = (" << new_location.delta_X << "," << new_location.delta_Y << ")");
-
-		if((new_location.delta_X < 0.2) && (new_location.delta_Y < 0.2)&&(Height < 1.9))
-			delta_pos = 1;
 	}
 /*
 	float Velociy_X_max = new_location.delta_X * 2;
@@ -119,23 +110,10 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 */
 }
 
-void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
-{
-	Height = LocalPosition.z;
-	ROS_INFO_STREAM(std::setprecision(2) << std::fixed
-			<< "altitude = "  << Height);
-	if(Height > 0.8)
-	{
-		alti_flag = 0;
-		for(int i = 0;i < 20; i++)
-		{
-			drone->attitude_control(0x40,0,0,-1,0);//水平速度
-			usleep(20000);
-		}
-		ROS_INFO_STREAM("I changed the height!");
-	}
-	else alti_flag = 1;
-}
+
+
+
+
 
 
 

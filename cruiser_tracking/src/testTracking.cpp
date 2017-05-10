@@ -1,4 +1,10 @@
 /*
+ * testTracking.cpp
+ *
+ *  Created on: May 10, 2017
+ *      Author: cj
+ */
+/*
  * testLocation.cpp
  *
  *  Created on: May 9, 2017
@@ -9,10 +15,10 @@
 
 int main(int argc,char **argv)
 {
-	ros::init(argc,argv,"test_publish_location");
+	ros::init(argc,argv,"test_publish_tracking_location");
 	ros::NodeHandle nh;
 
-	ros::Publisher pub_deltalocaion = nh.advertise<cruiser::DeltaPosition>("cruiser/landing_move",1);
+	ros::Publisher pub_deltalocaion = nh.advertise<cruiser::DeltaPosition>("cruiser/tracking_move",1);
 
 	srand(time(0));
 	ros::Rate rate_pub(1);
@@ -27,6 +33,10 @@ int main(int argc,char **argv)
 		rate_pub.sleep();
 	}
 }
+
+
+
+
 
 
 

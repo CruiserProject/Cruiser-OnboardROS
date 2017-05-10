@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(cruiser_landing)
+project(cruiser_tracking)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 # add_definitions(-std=c++11)
@@ -104,7 +104,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES cruiser_landing
+#  LIBRARIES cruiser_tracking
 #  CATKIN_DEPENDS cruiser dji_sdk
 #  DEPENDS system_lib
 )
@@ -122,30 +122,27 @@ include_directories(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/cruiser_landing.cpp
+#   src/${PROJECT_NAME}/cruiser_tracking.cpp
 # )
-
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-include_directories(include ${catkin_INCLUDE_DIRS})
-
-add_executable(landing_move_node src/landing_move.cpp)
-target_link_libraries(landing_move_node ${catkin_LIBRARIES})
-add_dependencies(landing_move_node cruiser_generate_messages_cpp)
-
-add_executable(test_pub_location src/testLocation.cpp)
-target_link_libraries(test_pub_location ${catkin_LIBRARIES})
-add_dependencies(test_pub_location cruiser_generate_messages_cpp)
-
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/cruiser_landing_node.cpp)
+# add_executable(${PROJECT_NAME}_node src/cruiser_tracking_node.cpp)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
+add_executable(tracking_move_node src/tracking_move.cpp)
+target_link_libraries(tracking_move_node ${catkin_LIBRARIES})
+add_dependencies(tracking_move_node cruiser_generate_messages_cpp)
+
+add_executable(test_pub_tracking src/testTracking.cpp)
+target_link_libraries(test_pub_tracking ${catkin_LIBRARIES})
+add_dependencies(test_pub_tracking cruiser_generate_messages_cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -201,7 +198,7 @@ add_dependencies(test_pub_location cruiser_generate_messages_cpp)
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_cruiser_landing.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_cruiser_tracking.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
