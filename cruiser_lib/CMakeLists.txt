@@ -3,11 +3,17 @@ project(cruiser_lib)
 
 ## Add support for C++11, supported in ROS Kinetic and newer
 # add_definitions(-std=c++11)
+set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+  cruiser
+  dji_sdk
+  roscpp
+  dji_sdk_read_cam
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -127,6 +133,22 @@ catkin_package(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/cruiser_lib_node.cpp)
+
+include_directories(include ${catkin_INCLUDE_DIRS})
+
+add_executable(landing_alg_node src/landing_alg_node.cpp)
+target_link_libraries(
+  landing_alg_node
+  dcam
+  ${catkin_LIBRARIES})
+add_dependencies(landing_alg_node cruiser_generate_messages_cpp)
+
+add_executable(tracking_alg_node src/tracking_alg_node.cpp src/fhog.cpp src/kcftracker.cpp)
+target_link_libraries(
+  tracking_alg_node
+  dcam
+  ${catkin_LIBRARIES})
+add_dependencies(tracking_alg_node cruiser_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

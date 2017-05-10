@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 find_package(catkin REQUIRED COMPONENTS
   cruiser
   dji_sdk
+  roscpp
 )
 
 ## System dependencies are found with CMake's conventions
@@ -144,14 +145,6 @@ add_dependencies(tracking_move_node cruiser_generate_messages_cpp)
 add_executable(test_pub_tracking src/testTracking.cpp)
 target_link_libraries(test_pub_tracking ${catkin_LIBRARIES})
 add_dependencies(test_pub_tracking cruiser_generate_messages_cpp)
-
-
-add_executable(tracking_alg_node src/tracking_alg_node.cpp src/fhog.cpp src/kcftracker.cpp)
-target_link_libraries(
-  tracking_alg_node
-  dcam
-  ${catkin_LIBRARIES})
-add_dependencies(tracking_alg_node cruiser_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

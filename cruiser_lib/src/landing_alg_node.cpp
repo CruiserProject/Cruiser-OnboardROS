@@ -21,8 +21,8 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include "cv.h"
-#include "highgui.h"
+#include </usr/include/opencv/cv.h>   //changed path
+#include <opencv2/highgui/highgui.hpp>     //changed path
 #include "djicam.h"
 
 #include <dji_sdk/LocalPosition.h>

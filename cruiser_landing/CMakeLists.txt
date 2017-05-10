@@ -11,6 +11,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS}")
 find_package(catkin REQUIRED COMPONENTS
   cruiser
   dji_sdk
+  roscpp
 )
 
 ## System dependencies are found with CMake's conventions
@@ -142,12 +143,6 @@ add_executable(test_pub_location src/testLocation.cpp)
 target_link_libraries(test_pub_location ${catkin_LIBRARIES})
 add_dependencies(test_pub_location cruiser_generate_messages_cpp)
 
-add_executable(landing_alg_node src/landing_alg_node.cpp)
-target_link_libraries(
-  landing_alg_node
-  dcam
-  ${catkin_LIBRARIES})
-add_dependencies(landing_alg_node cruiser_generate_messages_cpp)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
