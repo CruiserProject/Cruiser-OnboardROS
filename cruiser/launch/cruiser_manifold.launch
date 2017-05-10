@@ -9,7 +9,7 @@
 		<param name="to_mobile" type="int" value="1"/>
 	</node>
 	
-	<include file="$(find activate)/launch/activate.launch"/>
+	<include file="$(find cruiser_activate)/launch/activate.launch"/>
 	
 	<node
 		pkg="move_dji"
