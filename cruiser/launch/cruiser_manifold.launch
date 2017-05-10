@@ -3,8 +3,7 @@
 		pkg="dji_sdk_read_cam"
 		type="dji_sdk_read_cam"
 		name="dji_sdk_read_cam"
-		output="screen">
-		
+	>
 		<!-- node parameters -->
 		<param name="gray_or_rgb" type="int" value="1"/>
 		<param name="to_mobile" type="int" value="1"/>
@@ -16,22 +15,18 @@
 		pkg="move_dji"
 		type="move_dji"
 		name="move_dji"
-		output="screen"	
-		launch-prefix="xterm -e"	
 	/>
+	
 	<node
 		pkg="dji_sdk_read_cam"
 		type="HoughCircle"
 		name="HoughCircle_node"
-		output="screen"	
-		launch-prefix="xterm -e"	
 	/>
+	
     <node
 		pkg="dji_sdk_read_cam"
 		type="runtracker"
 		name="runtracker_node"
-		output="screen"	
-		launch-prefix="xterm -e"
 	/>
 </launch>
 
