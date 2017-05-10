@@ -118,6 +118,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}
 )
 
 ## Declare a C++ library
@@ -143,6 +144,15 @@ add_dependencies(tracking_move_node cruiser_generate_messages_cpp)
 add_executable(test_pub_tracking src/testTracking.cpp)
 target_link_libraries(test_pub_tracking ${catkin_LIBRARIES})
 add_dependencies(test_pub_tracking cruiser_generate_messages_cpp)
+
+
+add_executable(tracking_alg_node src/tracking_alg_node.cpp src/fhog.cpp src/kcftracker.cpp)
+target_link_libraries(
+  tracking_alg_node
+  dcam
+  ${catkin_LIBRARIES})
+add_dependencies(tracking_alg_node cruiser_generate_messages_cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

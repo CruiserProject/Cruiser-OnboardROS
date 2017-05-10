@@ -15,8 +15,8 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include </usr/include/opencv/cv.h>
-#include <opencv2/highgui/highgui.hpp>
+#include </usr/include/opencv/cv.h>   //changed path
+#include <opencv2/highgui/highgui.hpp>     //changed path
 #include "djicam.h"
 
 typedef unsigned char   BYTE;
@@ -91,7 +91,7 @@ bool YUV420_To_BGR24(unsigned char *puc_y, unsigned char *puc_u, unsigned char *
 
 	int temp = 0;
 
-	BYTE* rData = rgbData; 
+	BYTE* rData = rgbData;
 	BYTE* gData = rgbData + baseSize;
 	BYTE* bData = gData + baseSize;
 
@@ -150,9 +150,9 @@ IplImage* YUV420_To_IplImage(unsigned char* pYUV420, int width, int height)
 
 	int temp = 0;
 
-	BYTE* yData = pYUV420; 
-	BYTE* uData = pYUV420 + baseSize; 
-	BYTE* vData = uData + (baseSize>>2); 
+	BYTE* yData = pYUV420;
+	BYTE* uData = pYUV420 + baseSize;
+	BYTE* vData = uData + (baseSize>>2);
 
 	if(YUV420_To_BGR24(yData, uData, vData, pRGB24, width, height) == false || !pRGB24)
 	{
@@ -261,11 +261,12 @@ int main(int argc, char **argv)
 			}
 			cvResize(pRawImg,pImg,CV_INTER_LINEAR);
 
-
+			/*******show image on screen*********
 			cv::Mat matImage = cv::Mat(pImg,1);
 			cv::namedWindow("echo picture",0);
 			cv::imshow("echo picture",matImage);
 			cv::waitKey(10);
+			*/
 
 			time=ros::Time::now();
 			cvi.header.stamp = time;
@@ -286,7 +287,7 @@ int main(int argc, char **argv)
 			nCount++;
 
 		}
-		else 
+		else
 			break;
 		usleep(1000);
 	}

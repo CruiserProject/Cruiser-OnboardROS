@@ -118,6 +118,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}
 )
 
 ## Declare a C++ library
@@ -140,6 +141,13 @@ add_dependencies(landing_move_node cruiser_generate_messages_cpp)
 add_executable(test_pub_location src/testLocation.cpp)
 target_link_libraries(test_pub_location ${catkin_LIBRARIES})
 add_dependencies(test_pub_location cruiser_generate_messages_cpp)
+
+add_executable(landing_alg_node src/landing_alg_node.cpp)
+target_link_libraries(
+  landing_alg_node
+  dcam
+  ${catkin_LIBRARIES})
+add_dependencies(landing_alg_node cruiser_generate_messages_cpp)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
