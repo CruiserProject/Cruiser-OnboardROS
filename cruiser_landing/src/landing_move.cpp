@@ -22,11 +22,11 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 DJIDrone *drone;
 DJI::onboardSDK::ROSAdapter *rosAdapter;
 
-int alti_flag = 0;
-int delta_pos = 0;
+bool alti_flag = false;
+bool delta_pos = false;
 float Height;
 float Height_Last;
-
+bool landing_flag = true;
 int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"landing_move_node");
@@ -49,11 +49,12 @@ int main(int argc,char **argv)
 	ROS_INFO("D");
     while(ros::ok())
     {
-      	if(alti_flag||delta_pos)
+      	if((alti_flag||delta_pos)&&landing_flag)
     	{
     		drone->landing();
     		drone->release_sdk_permission_control();
-    		ros::shutdown();
+//    		ros::shutdown();
+    		landing_flag =false;
     	}
         ros::spinOnce();
 
@@ -77,7 +78,7 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 				<< "position = (" << new_location.delta_X_meter << "," << new_location.delta_Y_meter << ")");
 
 		if((new_location.delta_X_meter < 0.2) && (new_location.delta_Y_meter < 0.2)&&(Height < 1.9))
-			delta_pos = 1;
+			delta_pos = true;
 	}
 /*
 	float Velociy_X_max = new_location.delta_X * 2;
@@ -135,7 +136,7 @@ void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 	}
 	else
 	{
-		if(abs(Height_Last-Height) < 1)	alti_flag = 1;
+		if(abs(Height_Last-Height) < 1)	alti_flag = true;
 	}
 
 }

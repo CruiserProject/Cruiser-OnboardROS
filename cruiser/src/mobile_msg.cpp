@@ -9,13 +9,15 @@
 #include <cruiser/Flag.h>
 #include <cruiser/DeltaPosition.h>
 #include <cruiser/TrackingPosition.h>
+#include <dji_sdk/SendDataToRemoteDevice.h>
+#include <cstring>
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
-void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag);
-void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position);
+void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client);
+void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client);
 
 char mobile_msg[10] = {0};
-
+unsigned char data_to_mobile[10] = {0};
 int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"mobile_msg");
@@ -25,15 +27,17 @@ int main(int argc,char **argv)
 	ros::Publisher pub_landing_flag = nh.advertise<cruiser::Flag>("cruiser/landing_flag",1);
 	ros::Publisher pub_tracking_flag = nh.advertise<cruiser::Flag>("cruiser/tracking_flag",1);
 	ros::Publisher pub_tracking_position = nh.advertise<cruiser::TrackingPosition>("cruiser/tracking_position",1);
+	ros::ServiceClient send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
+
 	while(ros::ok())
 	{
 		switch (mobile_msg[0])
 		{
 		case 0x01:
-			Visual_Landing_Cmd(mobile_msg,pub_landing_flag);
+			Visual_Landing_Cmd(mobile_msg,pub_landing_flag,send_to_mobile_client);
 			break;
 		case 0x02:
-			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position);
+			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position,send_to_mobile_client);
 			break;
 		default:break;
 		}
@@ -52,7 +56,7 @@ void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData
 	}
 }
 
-void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag)
+void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client)
 {
 	switch(mobile_msg[1])
 	{
@@ -62,6 +66,14 @@ void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag)
 		landing_flag.flag = true;
 		pub_landing_flag.publish(landing_flag);
 		ROS_INFO("0101");
+		data_to_mobile[0] = 0x01;
+		data_to_mobile[1] = 0x02;
+		dji_sdk::SendDataToRemoteDevice::Request req;
+		memcpy(&req.data,data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Response resp;
+		bool success = send_to_mobile_client.call(req,resp);
+		if(success)ROS_INFO("0102");
+		memset(data_to_mobile, 0, sizeof(data_to_mobile));
 	}
 	break;
 	case 0x03:
@@ -70,13 +82,21 @@ void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag)
 		landing_flag.flag = false;
 		pub_landing_flag.publish(landing_flag);
 		ROS_INFO("0103");
+		data_to_mobile[0] = 0x01;
+		data_to_mobile[1] = 0x04;
+		dji_sdk::SendDataToRemoteDevice::Request req;
+		memcpy(&req.data,data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Response resp;
+		bool success = send_to_mobile_client.call(req,resp);
+		if(success)ROS_INFO("0104");
+		memset(data_to_mobile, 0, sizeof(data_to_mobile));
 	}
 	break;
 	default:break;
 	}
 }
 
-void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position)
+void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client)
 {
 	switch(mobile_msg[1])
 	{
@@ -86,6 +106,14 @@ void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::
 		tracking_flag.flag = true;
 		pub_tracking_flag.publish(tracking_flag);
 		ROS_INFO("0201");
+		data_to_mobile[0] = 0x02;
+		data_to_mobile[1] = 0x02;
+		dji_sdk::SendDataToRemoteDevice::Request req;
+		memcpy(&req.data,data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Response resp;
+		bool success = send_to_mobile_client.call(req,resp);
+		if(success)ROS_INFO("0202");
+		memset(data_to_mobile, 0, sizeof(data_to_mobile));
 	}
 	break;
 	case 0x03:
@@ -94,6 +122,15 @@ void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::
 		tracking_flag.flag = false;
 		pub_tracking_flag.publish(tracking_flag);
 		ROS_INFO("0203");
+		data_to_mobile[0] = 0x02;
+		data_to_mobile[1] = 0x04;
+		dji_sdk::SendDataToRemoteDevice::Request req;
+		memcpy(&req.data,data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Response resp;
+		bool success = send_to_mobile_client.call(req,resp);
+		if(success)ROS_INFO("0204");
+		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+
 	}
 	break;
 	case 0x11:
