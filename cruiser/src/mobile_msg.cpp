@@ -71,45 +71,37 @@ void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData
 	}
 }
 
-void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client)
+void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client)
 {
 	unsigned char data_to_mobile[10] = {0};
 	switch(mobile_msg[1])
 	{
-	case 1:
+	case 0x01:
 	{
+		//publish to topic
 		cruiser::Flag landing_flag;
 		landing_flag.flag = true;
 		pub_landing_flag.publish(landing_flag);
-		ROS_INFO("0101");
+		ROS_INFO_STREAM("0101");
+
+		//ACK to mobile
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x02;
-//		dji_sdk::SendDataToRemoteDevice::Request req;
-//		req.data.resize(10);
-//		memcpy(&req.data[0],data_to_mobile,10);
-//		dji_sdk::SendDataToRemoteDevice::Response resp;
-//		bool success = send_to_mobile_client.call(req,resp);
-//		if(success)ROS_INFO("0102");
-//		memset(data_to_mobile, 0, sizeof(data_to_mobile));
-		if(SendMyDataToMobile(send_to_mobile_client,data_to_mobile))ROS_INFO_STREAM("0101");
+		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
 		break;
 	}
 	case 0x03:
 	{
+		//publish to topic
 		cruiser::Flag landing_flag;
 		landing_flag.flag = false;
 		pub_landing_flag.publish(landing_flag);
-		ROS_INFO("0103");
+		ROS_INFO_STREAM("0103");
+
+		//ACK to mobile
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x04;
-//		dji_sdk::SendDataToRemoteDevice::Request req;
-//		req.data.resize(10);
-//		memcpy(&req.data[0],data_to_mobile,10);
-//		dji_sdk::SendDataToRemoteDevice::Response resp;
-//		bool success = send_to_mobile_client.call(req,resp);
-//		if(success)ROS_INFO("0104");
-//		memset(data_to_mobile, 0, sizeof(data_to_mobile));
-		if(SendMyDataToMobile(send_to_mobile_client,data_to_mobile))ROS_INFO_STREAM("0103");
+		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
 		break;
 	}
 	default:
@@ -117,59 +109,55 @@ void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::Se
 	}
 }
 
-void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client)
+void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client)
 {
 	unsigned char data_to_mobile[10] = {0};
 	switch(mobile_msg[1])
 	{
 	case 0x01:
 	{
+		//publish to topic
 		cruiser::Flag tracking_flag;
 		tracking_flag.flag = true;
 		pub_tracking_flag.publish(tracking_flag);
-		ROS_INFO("0201");
+		ROS_INFO_STREAM("0201");
+
+		//ACK to mobile
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x02;
-//		dji_sdk::SendDataToRemoteDevice::Request req;
-//		req.data.resize(10);
-//		memcpy(&req.data[0],data_to_mobile,10);
-//		dji_sdk::SendDataToRemoteDevice::Response resp;
-//		bool success = send_to_mobile_client.call(req,resp);
-//		if(success)ROS_INFO("0202");
-//		memset(data_to_mobile, 0, sizeof(data_to_mobile));
-		if(SendMyDataToMobile(send_to_mobile_client,data_to_mobile))
-			ROS_INFO_STREAM("0201");
+		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
 		break;
 	}
 	case 0x03:
 	{
+		//publish to topic
 		cruiser::Flag tracking_flag;
 		tracking_flag.flag = false;
 		pub_tracking_flag.publish(tracking_flag);
-		ROS_INFO("0203");
+		ROS_INFO_STREAM("0203");
+
+		//ACK to mobile
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x04;
-//		dji_sdk::SendDataToRemoteDevice::Request req;
-//		req.data.resize(10);
-//		memcpy(&req.data[0],data_to_mobile,10);
-//		dji_sdk::SendDataToRemoteDevice::Response resp;
-//		bool success = send_to_mobile_client.call(req,resp);
-//		if(success)ROS_INFO("0204");
-//		memset(data_to_mobile, 0, sizeof(data_to_mobile));
-		if(SendMyDataToMobile(send_to_mobile_client,data_to_mobile))
-			ROS_INFO_STREAM("0203");
+		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
 		break;
 	}
 	case 0x11:
 	{
+		//publish to topic
 		cruiser::TrackingPosition TrackingPosition;
 		TrackingPosition.a_width_percent = float(mobile_msg[2])/100;
 		TrackingPosition.a_height_percent = float(mobile_msg[3])/100;
 		TrackingPosition.b_width_percent = float(mobile_msg[4])/100;
 		TrackingPosition.b_height_percent = float(mobile_msg[5])/100;
 		pub_tracking_position.publish(TrackingPosition);
-		ROS_INFO_STREAM("a:("<<TrackingPosition.a_width_percent<<","<<TrackingPosition.a_height_percent
-				<<")   b:("<<TrackingPosition.b_width_percent<<","<<TrackingPosition.b_height_percent<<")");
+		ROS_INFO_STREAM("0211 a:("<<TrackingPosition.a_width_percent<<","<<TrackingPosition.a_height_percent
+				<<") b:("<<TrackingPosition.b_width_percent<<","<<TrackingPosition.b_height_percent<<")");
+
+		//ACK to mobile
+		data_to_mobile[0] = 0x02;
+		data_to_mobile[1] = 0x12;
+		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
 		break;
 	}
 	default:
@@ -195,8 +183,8 @@ bool SendMyDataToMobile(ros::ServiceClient send_to_mobile_client, unsigned char*
 	memcpy(&req.data[0],data_to_mobile,10);
 	dji_sdk::SendDataToRemoteDevice::Response resp;
 	bool success = send_to_mobile_client.call(req,resp);
-	if(success)ROS_INFO_STREAM("send data "data_to_mobile[0]<<" "<<data_to_mobile[1]
-								<<" "<< data_to_mobile[2]<<" to mobile.");
+	if(success)
+		ROS_INFO_STREAM("send data "<<data_to_mobile[0]<<" "<<data_to_mobile[1]<<" ... to mobile.");
 	return success;
 }
 
@@ -209,12 +197,11 @@ void float2char(float num, unsigned char& high, unsigned char& low)
 
 void SendDeltaXYtoMobile(ros::ServiceClient send_to_mobile_client)
 {
-	unsigned char data_to_mobile[10];
+	unsigned char data_to_mobile[10] = {0};
 	data_to_mobile[0] = 0x01;
 	data_to_mobile[1] = 0x42;
 	float2char(delta_x,data_to_mobile[2],data_to_mobile[3]);
 	float2char(delta_y,data_to_mobile[4],data_to_mobile[5]);
-	if(SendMyDataToMobile(send_to_mobile_client,data_to_mobile))
-		ROS_INFO_STREAM("0142");
+	SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
 }
 
