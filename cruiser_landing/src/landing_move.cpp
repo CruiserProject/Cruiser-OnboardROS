@@ -51,7 +51,7 @@ int main(int argc,char **argv)
       	if((alti_flag||delta_pos)&&landing_flag)
     	{
     		data_to_mobile[0] = 0x01;
-    		data_to_mobile[1] = 0x04;
+    		data_to_mobile[1] = 0x06;
       		dji_sdk::SendDataToRemoteDevice::Request land_req;
     		memcpy(&land_req.data,data_to_mobile,10);
     		dji_sdk::SendDataToRemoteDevice::Response land_resp;
