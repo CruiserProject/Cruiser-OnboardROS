@@ -21,6 +21,7 @@ int main(int argc,char **argv)
 		cruiser::DeltaPosition new_location;
 		new_location.delta_X_meter = 10 * double(rand())/double(RAND_MAX) - 5;
 		new_location.delta_Y_meter = 10 * double(rand())/double(RAND_MAX) - 5;
+		new_location.state = true;
 		pub_deltalocaion.publish(new_location);
 
 		ROS_INFO_STREAM("delta_x = "<<new_location.delta_X_meter<<" delta_y = "<<new_location.delta_Y_meter);

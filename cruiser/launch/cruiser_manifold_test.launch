@@ -1,0 +1,39 @@
+<launch>
+	<node
+		pkg="dji_sdk_read_cam"
+		type="dji_sdk_read_cam"
+		name="dji_sdk_read_cam"     >
+		
+		<!-- node parameters -->
+		<param name="gray_or_rgb" type="int" value="1"/>
+		<param name="to_mobile" type="int" value="1"/>
+	</node>
+	
+	<include file="$(find cruiser_activate)/launch/activate_manifold.launch"/>
+	
+	<node
+		pkg="cruiser"
+		type="mobile_msg"
+		name="mobile_msg"
+	/>
+	
+	<node
+		pkg="cruiser_landing"
+		type="test_pub_location"
+		name="test_pub_location"
+	/>
+	
+	<node
+		pkg="cruiser_lib"
+		type="landing_alg_node"
+		name="landing_alg_node"
+	/>
+	
+	<node
+		pkg="cruiser_landing"
+		type="landing_move_node"
+		name="landing_move_node"
+	/>
+	
+</launch>
+

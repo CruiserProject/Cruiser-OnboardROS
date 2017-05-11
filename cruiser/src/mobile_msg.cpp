@@ -47,7 +47,7 @@ int main(int argc,char **argv)
 			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position,send_to_mobile_client);
 			break;
 		default:break;
-		}
+		}git 
 
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x42;
