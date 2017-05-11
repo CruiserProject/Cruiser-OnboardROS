@@ -14,8 +14,8 @@
 #include <cstring>
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
-void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client);
-void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client);
+void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client);
+void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client);
 void DeltaXYCallback(const cruiser::DeltaPosition& new_location);
 bool SendMyDataToMobile(ros::ServiceClient send_to_mobile_client,unsigned char* data_to_mobile);
 void float2char(float num, unsigned char& high, unsigned char& low);
