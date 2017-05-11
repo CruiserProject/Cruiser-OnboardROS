@@ -14,17 +14,18 @@
 #include <cstring>
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
+void DeltaXYCallback(const cruiser::DeltaPosition& new_location);
+
 void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client);
 void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client);
-void DeltaXYCallback(const cruiser::DeltaPosition& new_location);
-bool SendMyDataToMobile(ros::ServiceClient send_to_mobile_client,unsigned char* data_to_mobile);
-void float2char(float num, unsigned char& high, unsigned char& low);
-void SendDeltaXYtoMobile(ros::ServiceClient send_to_mobile_client);
 
-float delta_x;
-float delta_y;
+void SendMyDataToMobile(ros::ServiceClient send_to_mobile_client,unsigned char* data_to_mobile);
+void SendDeltaXYtoMobile(ros::ServiceClient send_to_mobile_client);
+void float2char(float num, unsigned char& high, unsigned char& low);
+
+cruiser::DeltaPosition Delta;
 unsigned char mobile_msg[10] = {0};
-//unsigned char x_high,x_low,y_high,y_low;
+
 int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"mobile_msg");
@@ -60,7 +61,6 @@ int main(int argc,char **argv)
 		ros::spinOnce();
 		communicate_rate.sleep();
 	}
-
 }
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData)
@@ -71,9 +71,15 @@ void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData
 	}
 }
 
+void DeltaXYCallback(const cruiser::DeltaPosition& new_location)
+{
+	Delta = new_location;
+}
+
 void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client)
 {
 	unsigned char data_to_mobile[10] = {0};
+	//CDT SET 0x01
 	switch(mobile_msg[1])
 	{
 	case 0x01:
@@ -112,6 +118,7 @@ void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_fla
 void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client)
 {
 	unsigned char data_to_mobile[10] = {0};
+	//CDT SET 0x02
 	switch(mobile_msg[1])
 	{
 	case 0x01:
@@ -166,42 +173,31 @@ void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_f
 
 }
 
-
-void DeltaXYCallback(const cruiser::DeltaPosition& new_location)
-{
-	if (new_location.state)
-	{
-		delta_x = new_location.delta_X_meter;
-		delta_y = new_location.delta_Y_meter;
-	}
-}
-
-bool SendMyDataToMobile(ros::ServiceClient send_to_mobile_client, unsigned char* data_to_mobile)
+void SendMyDataToMobile(ros::ServiceClient send_to_mobile_client, unsigned char* data_to_mobile)
 {
 	dji_sdk::SendDataToRemoteDevice::Request req;
 	req.data.resize(10);
 	memcpy(&req.data[0],data_to_mobile,10);
 	dji_sdk::SendDataToRemoteDevice::Response resp;
-	bool success = send_to_mobile_client.call(req,resp);
-	if(success)
+	if(send_to_mobile_client.call(req,resp))
 		ROS_INFO_STREAM("send data "<<data_to_mobile[0]<<" "<<data_to_mobile[1]<<" ... to mobile.");
-	return success;
 }
 
+void SendDeltaXYtoMobile(ros::ServiceClient send_to_mobile_client)
+{
+	if (Delta.state)
+	{
+		unsigned char data_to_mobile[10] = {0};
+		data_to_mobile[0] = 0x01;
+		data_to_mobile[1] = 0x42;
+		float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
+		float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
+		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+	}
+}
 
 void float2char(float num, unsigned char& high, unsigned char& low)
 {
 	high = (unsigned char)num;
 	low = (unsigned char)(num*100 - high*100);
 }
-
-void SendDeltaXYtoMobile(ros::ServiceClient send_to_mobile_client)
-{
-	unsigned char data_to_mobile[10] = {0};
-	data_to_mobile[0] = 0x01;
-	data_to_mobile[1] = 0x42;
-	float2char(delta_x,data_to_mobile[2],data_to_mobile[3]);
-	float2char(delta_y,data_to_mobile[4],data_to_mobile[5]);
-	SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
-}
-
