@@ -53,7 +53,8 @@ int main(int argc,char **argv)
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x06;
       		dji_sdk::SendDataToRemoteDevice::Request land_req;
-    		memcpy(&land_req.data,data_to_mobile,10);
+      		land_req.data.resize(10);
+    		memcpy(&land_req.data[0],data_to_mobile,10);
     		dji_sdk::SendDataToRemoteDevice::Response land_resp;
     		bool success = send_to_mobile_client.call(land_req,land_resp);
     		if(success)ROS_INFO("0104");
