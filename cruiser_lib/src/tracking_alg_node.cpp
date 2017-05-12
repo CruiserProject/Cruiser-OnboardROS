@@ -190,8 +190,9 @@ class ImageConverter
   ros::Subscriber rect_sub;
   ros::Subscriber Height;
   ros::Publisher pub;
+  ros::Publisher pubs;
   cruiser::DeltaPosition deltaPosition;
-
+  cruiser::TrackingPosition myPosition;
 
 	public:
   	ImageConverter():it_(nh_)
@@ -203,6 +204,7 @@ class ImageConverter
    	  tracking_flag=nh_.subscribe("cruiser/tracking_flag",1,&getFlagCb);
       Height=nh_.subscribe("/dji_sdk/local_position",1,&localPositionCallBack);
       pub=nh_.advertise<cruiser::DeltaPosition>("cruiser/tracking_move",1);
+      pubs=nh_.advertise<cruiser::TrackingPosition>("cruiser/tracking_position_now",1);
       cv::namedWindow(OPENCV_WINDOW);
   	}
 
@@ -257,6 +259,11 @@ class ImageConverter
           trackingCoordCal(result.x+result.width/2,result.y+result.height/2,deltaPosition.delta_X_meter,deltaPosition.delta_Y_meter);
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
           //rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
+          //msg.a_width_percent msg.b_width_percent msg.a_height_percent msg.b_height_percent
+          myPosition.a_width_percent=result.x/1280;
+          myPosition.a_height_percent=result.x/720;
+          myPosition.b_width_percent=(result.x+result.width)/1280;
+          myPosition.b_height_percent=(result.y+result.height)/720;
           if(!SILENT)
           {
             if (!capture.empty())
@@ -267,7 +274,9 @@ class ImageConverter
           }
         }
       }
+      
       pub.publish(deltaPosition);
+      pubs.publish(myPosition);
     }
 };
 

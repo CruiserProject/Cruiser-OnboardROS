@@ -22,10 +22,10 @@ private:
 public:
 	CruiserDrone(ros::NodeHandle& nh)
 	{
-		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaXYCallback);
+		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYCallback, this);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
 	}
-	void DeltaXYCallback(const cruiser::DeltaPosition& Delta)
+	void DeltaXYCallback(cruiser::DeltaPosition Delta)
 	{
 		if (Delta.state)
 		{
