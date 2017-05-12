@@ -47,20 +47,21 @@ int main(int argc,char **argv)
 			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position,send_to_mobile_client);
 			break;
 		default:break;
-		}git 
+		}
 
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x42;
 
-		unsigned char & delta_x_high =  data_to_mobile[2];
-		unsigned char & delta_x_low =  data_to_mobile[3];
-		unsigned char & delta_y_high =  data_to_mobile[4];
-		unsigned char & delta_y_low =  data_to_mobile[5];
+		unsigned char  delta_x_high =  data_to_mobile[2];
+		unsigned char  delta_x_low =  data_to_mobile[3];
+		unsigned char  delta_y_high =  data_to_mobile[4];
+		unsigned char  delta_y_low =  data_to_mobile[5];
 		float2char(delta_x,delta_x_high,delta_x_low);
 		float2char(delta_y,delta_y_high,delta_y_low);
 
-  		dji_sdk::SendDataToRemoteDevice::Request delta_pos_req;
-		memcpy(&delta_pos_req.data,data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Request delta_pos_req;
+		delta_pos_req.data.resize(10);
+		memcpy(&delta_pos_req.data[0],data_to_mobile,10);
 		dji_sdk::SendDataToRemoteDevice::Response delta_pos_resp;
 		bool land_success = send_to_mobile_client.call(delta_pos_req,delta_pos_resp);
 		memset(data_to_mobile, 0, sizeof(data_to_mobile));
@@ -83,7 +84,7 @@ void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::Se
 {
 	switch(mobile_msg[1])
 	{
-	case 0x01:
+	case 1:
 	{
 		cruiser::Flag landing_flag;
 		landing_flag.flag = true;
@@ -92,13 +93,14 @@ void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::Se
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x02;
 		dji_sdk::SendDataToRemoteDevice::Request req;
-		memcpy(&req.data,data_to_mobile,10);
+		req.data.resize(10);
+		memcpy(&req.data[0],data_to_mobile,10);
 		dji_sdk::SendDataToRemoteDevice::Response resp;
 		bool success = send_to_mobile_client.call(req,resp);
 		if(success)ROS_INFO("0102");
 		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+		break;
 	}
-	break;
 	case 0x03:
 	{
 		cruiser::Flag landing_flag;
@@ -108,14 +110,16 @@ void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::Se
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x04;
 		dji_sdk::SendDataToRemoteDevice::Request req;
-		memcpy(&req.data,data_to_mobile,10);
+		req.data.resize(10);
+		memcpy(&req.data[0],data_to_mobile,10);
 		dji_sdk::SendDataToRemoteDevice::Response resp;
 		bool success = send_to_mobile_client.call(req,resp);
 		if(success)ROS_INFO("0104");
 		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+		break;
 	}
-	break;
-	default:break;
+	default:
+		break;
 	}
 }
 
@@ -132,13 +136,14 @@ void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x02;
 		dji_sdk::SendDataToRemoteDevice::Request req;
-		memcpy(&req.data,data_to_mobile,10);
+		req.data.resize(10);
+		memcpy(&req.data[0],data_to_mobile,10);
 		dji_sdk::SendDataToRemoteDevice::Response resp;
 		bool success = send_to_mobile_client.call(req,resp);
 		if(success)ROS_INFO("0202");
 		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+		break;
 	}
-	break;
 	case 0x03:
 	{
 		cruiser::Flag tracking_flag;
@@ -148,14 +153,14 @@ void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x04;
 		dji_sdk::SendDataToRemoteDevice::Request req;
-		memcpy(&req.data,data_to_mobile,10);
+		req.data.resize(10);
+		memcpy(&req.data[0],data_to_mobile,10);
 		dji_sdk::SendDataToRemoteDevice::Response resp;
 		bool success = send_to_mobile_client.call(req,resp);
 		if(success)ROS_INFO("0204");
 		memset(data_to_mobile, 0, sizeof(data_to_mobile));
-
+		break;
 	}
-	break;
 	case 0x11:
 	{
 		cruiser::TrackingPosition TrackingPosition;
@@ -166,9 +171,10 @@ void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::
 		pub_tracking_position.publish(TrackingPosition);
 		ROS_INFO_STREAM("a:( "<<TrackingPosition.a_width_percent<<" , "<<TrackingPosition.a_height_percent
 				<<" ) b:( "<<TrackingPosition.b_width_percent<<" , "<<TrackingPosition.b_height_percent);
+		break;
 	}
-	break;
-	default:break;
+	default:
+		break;
 	}
 }
 
