@@ -10,14 +10,20 @@
 #include <cruiser/DeltaPosition.h>
 #include <cruiser/TrackingPosition.h>
 #include <dji_sdk/SendDataToRemoteDevice.h>
+#include <cruiser/DeltaPosition.h>
 #include <cstring>
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
 void Visual_Landing_Cmd(char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client);
 void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client);
+void DeltaYCallback(const cruiser::DeltaPosition& new_location);
+void float2char(float num, unsigned char& high, unsigned char& low);
 
+float delta_x;
+float delta_y;
 char mobile_msg[10] = {0};
 unsigned char data_to_mobile[10] = {0};
+//unsigned char x_high,x_low,y_high,y_low;
 int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"mobile_msg");
@@ -28,6 +34,7 @@ int main(int argc,char **argv)
 	ros::Publisher pub_tracking_flag = nh.advertise<cruiser::Flag>("cruiser/tracking_flag",1);
 	ros::Publisher pub_tracking_position = nh.advertise<cruiser::TrackingPosition>("cruiser/tracking_position",1);
 	ros::ServiceClient send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
+	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaYCallback);
 
 	while(ros::ok())
 	{
@@ -41,7 +48,23 @@ int main(int argc,char **argv)
 			break;
 		default:break;
 		}
-		memset(mobile_msg, 0, sizeof(mobile_msg));
+
+		data_to_mobile[0] = 0x01;
+		data_to_mobile[1] = 0x42;
+
+		unsigned char & delta_x_high =  data_to_mobile[2];
+		unsigned char & delta_x_low =  data_to_mobile[3];
+		unsigned char & delta_y_high =  data_to_mobile[4];
+		unsigned char & delta_y_low =  data_to_mobile[5];
+		float2char(delta_x,delta_x_high,delta_x_low);
+		float2char(delta_y,delta_y_high,delta_y_low);
+
+  		dji_sdk::SendDataToRemoteDevice::Request delta_pos_req;
+		memcpy(&delta_pos_req.data,data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Response delta_pos_resp;
+		bool land_success = send_to_mobile_client.call(delta_pos_req,delta_pos_resp);
+		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+
 		ros::spinOnce();
 	}
 
@@ -148,3 +171,22 @@ void Object_Tracking_Cmd(char* mobile_msg,ros::Publisher pub_tracking_flag,ros::
 	default:break;
 	}
 }
+
+
+void DeltaYCallback(const cruiser::DeltaPosition& new_location)
+{
+	if (new_location.state)
+	{
+		delta_x = new_location.delta_X_meter;
+		delta_y = new_location.delta_Y_meter;
+	}
+}
+
+
+
+void float2char(float num, unsigned char& high, unsigned char& low)
+{
+	high = (unsigned char)num;
+	low = (unsigned char)(num*100 - high*100);
+}
+
