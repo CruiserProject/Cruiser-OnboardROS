@@ -27,7 +27,7 @@ bool alti_flag = false;
 bool delta_pos = false;
 float Height;
 float Height_Last;
-bool landing_flag = false;
+//bool landing_flag = false;
 unsigned char data_to_mobile[10] = {0};
 
 int main(int argc,char **argv)
@@ -48,7 +48,7 @@ int main(int argc,char **argv)
     while(ros::ok())
     {
 
-      	if((alti_flag||delta_pos)&&landing_flag)
+      	if(alti_flag||delta_pos)
     	{
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x06;
@@ -62,7 +62,7 @@ int main(int argc,char **argv)
     		drone->landing();
     		drone->release_sdk_permission_control();
 //    		ros::shutdown();
-    		landing_flag =false;
+//    		landing_flag =false;
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x08;
       		dji_sdk::SendDataToRemoteDevice::Request land_end_req;
@@ -83,7 +83,7 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 
 	if (new_location.state)
 	{
-		landing_flag = new_location.state;
+		//landing_flag = new_location.state;
 		float Velocity_X = new_location.delta_X_meter;
 		float Velocity_Y = new_location.delta_Y_meter;
 
@@ -139,7 +139,7 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 
 void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 {
-	if(landing_flag)
+	if(delta_pos)
 	{
 		Height_Last = Height;
 		Height = LocalPosition.z;
