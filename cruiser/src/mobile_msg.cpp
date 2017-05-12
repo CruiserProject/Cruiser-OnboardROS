@@ -13,22 +13,16 @@
 #include <cruiser/DeltaPosition.h>
 #include <cstring>
 
-void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
-void DeltaXYCallback(const cruiser::DeltaPosition& new_location);
-
-void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client);
-void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client);
-
-void SendMyDataToMobile(ros::ServiceClient send_to_mobile_client,unsigned char* data_to_mobile);
-void float2char(float num, unsigned char& high, unsigned char& low);
-
 class CruiserDrone
 {
 private:
+	ros::Subscriber DeltaMsg;
 	ros::ServiceClient send_to_mobile_client;
+
 public:
 	CruiserDrone(ros::NodeHandle& nh)
 	{
+		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaXYCallback);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
 	}
 	void DeltaXYCallback(const cruiser::DeltaPosition& Delta)
@@ -40,10 +34,26 @@ public:
 			data_to_mobile[1] = 0x42;
 			float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
 			float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
-			SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+			SendMyDataToMobile(data_to_mobile);
 		}
 	}
+	void SendMyDataToMobile(unsigned char* data_to_mobile)
+	{
+		dji_sdk::SendDataToRemoteDevice::Request req;
+		req.data.resize(10);
+		memcpy(&req.data[0],data_to_mobile,10);
+		dji_sdk::SendDataToRemoteDevice::Response resp;
+		if(send_to_mobile_client.call(req,resp))
+			ROS_INFO_STREAM("send data "<<data_to_mobile[0]<<" "<<data_to_mobile[1]<<" ... to mobile.");
+	}
 };
+
+void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
+
+void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,CruiserDrone* cruiser);
+void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,CruiserDrone* cruiser);
+
+void float2char(float num, unsigned char& high, unsigned char& low);
 
 unsigned char mobile_msg[10] = {0};
 
@@ -55,7 +65,6 @@ int main(int argc,char **argv)
     CruiserDrone* cruiser = new CruiserDrone(nh);
 
 	ros::Subscriber MobileMsg = nh.subscribe("/dji_sdk/data_received_from_remote_device",1,&GetMobileMsgCallback);
-	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaXYCallback);
 
 	ros::Publisher pub_landing_flag = nh.advertise<cruiser::Flag>("cruiser/landing_flag",1);
 	ros::Publisher pub_tracking_flag = nh.advertise<cruiser::Flag>("cruiser/tracking_flag",1);
@@ -68,10 +77,10 @@ int main(int argc,char **argv)
 		switch (mobile_msg[0])
 		{
 		case 0x01:
-			Visual_Landing_Cmd(mobile_msg,pub_landing_flag,cruiser->send_to_mobile_client);
+			Visual_Landing_Cmd(mobile_msg,pub_landing_flag,cruiser);
 			break;
 		case 0x02:
-			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position,cruiser->send_to_mobile_client);
+			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position,cruiser);
 			break;
 		default:
 			break;
@@ -90,7 +99,7 @@ void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData
 }
 
 
-void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,ros::ServiceClient send_to_mobile_client)
+void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,CruiserDrone* cruiser)
 {
 	unsigned char data_to_mobile[10] = {0};
 	//CDT SET 0x01
@@ -107,7 +116,7 @@ void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_fla
 		//ACK to mobile
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x02;
-		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+		cruiser->SendMyDataToMobile(data_to_mobile);
 		break;
 	}
 	case 0x03:
@@ -121,7 +130,7 @@ void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_fla
 		//ACK to mobile
 		data_to_mobile[0] = 0x01;
 		data_to_mobile[1] = 0x04;
-		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+		cruiser->SendMyDataToMobile(data_to_mobile);
 		break;
 	}
 	default:
@@ -129,7 +138,7 @@ void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_fla
 	}
 }
 
-void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,ros::ServiceClient send_to_mobile_client)
+void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,CruiserDrone* cruiser)
 {
 	unsigned char data_to_mobile[10] = {0};
 	//CDT SET 0x02
@@ -146,7 +155,7 @@ void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_f
 		//ACK to mobile
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x02;
-		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+		cruiser->SendMyDataToMobile(data_to_mobile);
 		break;
 	}
 	case 0x03:
@@ -160,7 +169,7 @@ void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_f
 		//ACK to mobile
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x04;
-		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+		cruiser->SendMyDataToMobile(data_to_mobile);
 		break;
 	}
 	case 0x11:
@@ -178,23 +187,13 @@ void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_f
 		//ACK to mobile
 		data_to_mobile[0] = 0x02;
 		data_to_mobile[1] = 0x12;
-		SendMyDataToMobile(send_to_mobile_client,data_to_mobile);
+		cruiser->SendMyDataToMobile(data_to_mobile);
 		break;
 	}
 	default:
 		break;
 	}
 
-}
-
-void SendMyDataToMobile(ros::ServiceClient send_to_mobile_client, unsigned char* data_to_mobile)
-{
-	dji_sdk::SendDataToRemoteDevice::Request req;
-	req.data.resize(10);
-	memcpy(&req.data[0],data_to_mobile,10);
-	dji_sdk::SendDataToRemoteDevice::Response resp;
-	if(send_to_mobile_client.call(req,resp))
-		ROS_INFO_STREAM("send data "<<data_to_mobile[0]<<" "<<data_to_mobile[1]<<" ... to mobile.");
 }
 
 
