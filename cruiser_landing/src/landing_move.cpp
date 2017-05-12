@@ -65,7 +65,8 @@ int main(int argc,char **argv)
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x08;
       		dji_sdk::SendDataToRemoteDevice::Request land_end_req;
-    		memcpy(&land_end_req.data,data_to_mobile,10);
+      		land_end_req.data.resize(10);
+    		memcpy(&land_end_req.data[0],data_to_mobile,10);
     		dji_sdk::SendDataToRemoteDevice::Response land_end_resp;
     		bool land_success = send_to_mobile_client.call(land_end_req,land_end_resp);
     		if(success)ROS_INFO("0108");

@@ -51,7 +51,7 @@ int main(int argc,char **argv)
     	{
     		drone->landing();
     		drone->release_sdk_permission_control();
-    		ros::shutdown();
+//    		ros::shutdown();
     	}
         ros::spinOnce();
         rate.sleep();

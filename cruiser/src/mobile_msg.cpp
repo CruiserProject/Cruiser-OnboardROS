@@ -17,12 +17,14 @@ class CruiserDrone
 {
 private:
 	ros::Subscriber DeltaMsg;
+	ros::Subscriber PositionNow;
 	ros::ServiceClient send_to_mobile_client;
 
 public:
 	CruiserDrone(ros::NodeHandle& nh)
 	{
 		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYCallback, this);
+		PositionNow = nh.subscribe("cruiser/tracking_position_now",1,&CruiserDrone::PositionNowCallback, this);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
 	}
 	void DeltaXYCallback(cruiser::DeltaPosition Delta)
@@ -32,10 +34,21 @@ public:
 			unsigned char data_to_mobile[10] = {0};
 			data_to_mobile[0] = 0x01;
 			data_to_mobile[1] = 0x42;
-			float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
-			float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
+			this->float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
+			this->float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
 			SendMyDataToMobile(data_to_mobile);
 		}
+	}
+	void PositionNowCallback(cruiser::TrackingPosition position)
+	{
+		unsigned char data_to_mobile[10] = {0};
+		data_to_mobile[0] = 0x02;
+		data_to_mobile[1] = 0x44;
+		data_to_mobile[2] = (unsigned char)(position.a_width_percent*100);
+		data_to_mobile[3] = (unsigned char)(position.a_height_percent*100);
+		data_to_mobile[4] = (unsigned char)(position.b_width_percent*100);
+		data_to_mobile[5] = (unsigned char)(position.b_height_percent*100);
+		SendMyDataToMobile(data_to_mobile);
 	}
 	void SendMyDataToMobile(unsigned char* data_to_mobile)
 	{
@@ -46,14 +59,17 @@ public:
 		if(send_to_mobile_client.call(req,resp))
 			ROS_INFO_STREAM("send data "<<data_to_mobile[0]<<" "<<data_to_mobile[1]<<" ... to mobile.");
 	}
+	void float2char(float num, unsigned char& high, unsigned char& low)
+	{
+		high = (unsigned char)num;
+		low = (unsigned char)(num*100 - high*100);
+	}
 };
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
 
 void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,CruiserDrone* cruiser);
 void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,CruiserDrone* cruiser);
-
-void float2char(float num, unsigned char& high, unsigned char& low);
 
 unsigned char mobile_msg[10] = {0};
 
@@ -78,6 +94,7 @@ int main(int argc,char **argv)
 		{
 		case 0x01:
 			Visual_Landing_Cmd(mobile_msg,pub_landing_flag,cruiser);
+
 			break;
 		case 0x02:
 			Object_Tracking_Cmd(mobile_msg,pub_tracking_flag,pub_tracking_position,cruiser);
@@ -85,6 +102,7 @@ int main(int argc,char **argv)
 		default:
 			break;
 		}
+		memset(mobile_msg, 0, sizeof(mobile_msg));
 		ros::spinOnce();
 		communicate_rate.sleep();
 	}
@@ -197,8 +215,3 @@ void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_f
 }
 
 
-void float2char(float num, unsigned char& high, unsigned char& low)
-{
-	high = (unsigned char)num;
-	low = (unsigned char)(num*100 - high*100);
-}
