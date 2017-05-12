@@ -16,18 +16,22 @@
 class CruiserDrone
 {
 private:
-	ros::Subscriber DeltaMsg;
+	ros::Subscriber DeltaMsgLanding;
 	ros::Subscriber PositionNow;
+	ros::Subscriber DeltaMsgTracking;
+
 	ros::ServiceClient send_to_mobile_client;
 
 public:
 	CruiserDrone(ros::NodeHandle& nh)
 	{
-		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYCallback, this);
+		DeltaMsgLanding = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYLangdingCallback, this);
 		PositionNow = nh.subscribe("cruiser/tracking_position_now",1,&CruiserDrone::PositionNowCallback, this);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
+		DeltaMsgTracking = nh.subscribe("cruiser/tracking_move",1,&CruiserDrone::DeltaXYTrackingCallback, this);
+
 	}
-	void DeltaXYCallback(cruiser::DeltaPosition Delta)
+	void DeltaXYLangdingCallback(cruiser::DeltaPosition Delta)
 	{
 		if (Delta.state)
 		{
@@ -39,6 +43,19 @@ public:
 			SendMyDataToMobile(data_to_mobile);
 		}
 	}
+	void DeltaXYTrackingCallback(cruiser::DeltaPosition Delta)
+	{
+		if (Delta.state)
+		{
+			unsigned char data_to_mobile[10] = {0};
+			data_to_mobile[0] = 0x01;
+			data_to_mobile[1] = 0x42;
+			this->float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
+			this->float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
+			SendMyDataToMobile(data_to_mobile);
+		}
+	}
+
 	void PositionNowCallback(cruiser::TrackingPosition position)
 	{
 		unsigned char data_to_mobile[10] = {0};
