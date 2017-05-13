@@ -75,7 +75,7 @@ class ImageConverter
 			Landing_flag=nh_.subscribe("cruiser/landing_flag",1,&landingFlagCallback);
 			delta_location=nh_.advertise<cruiser::DeltaPosition>("cruiser/landing_move",1);
 
-			cv::namedWindow(OPENCV_WINDOW);
+			//cv::namedWindow(OPENCV_WINDOW);
 		}
 
 		~ImageConverter()
@@ -103,6 +103,7 @@ class ImageConverter
 			if(flag)
 			{
 				srcImage=cv_ptr->image.clone();
+				cv::resize(srcImage,srcImage,Size(640,480));
 				Mat midImage;//临时变量和目标图的定义
 				cvtColor(srcImage,midImage, CV_BGR2GRAY);//转化边缘检测后的图为灰度图
 				GaussianBlur( midImage, midImage, Size(9, 9), 2, 2 );
@@ -132,7 +133,6 @@ class ImageConverter
 				//calculate the parameters in deltaposition
 				if(x==0&&y==0)
 				{
-					cout<<"do not detect circle!"<<endl;
 					ROS_INFO_STREAM("do not detect circle!.");
 					deltaPosition.state=false;//there is no circle detected,so the state in deltaposition should be false
 					deltaPosition.delta_X_meter=0;
@@ -162,13 +162,12 @@ class ImageConverter
 					deltaPosition.delta_X_meter=x;
 					deltaPosition.delta_Y_meter=y;
 				}
-
-				cv::imshow(OPENCV_WINDOW, srcImage);
-				cv::waitKey(3);
+				//cv::imshow(OPENCV_WINDOW, srcImage);
+				//cv::waitKey(3);
 				// Output modified video stream
 				//cv_ptr->image=srcImage;
 				//image_pub_.publish(srcImage.toImageMsg());
-   			//ROS_INFO_STREAM("delta_X = "<< new_delta.delta_X << " delta_Y = " << new_delta.delta_Y <<" delta_flag ="<< new_delta.flag);
+   			    //ROS_INFO_STREAM("delta_X = "<< new_delta.delta_X << " delta_Y = " << new_delta.delta_Y <<" delta_flag ="<< new_delta.flag);
 				delta_location.publish(deltaPosition);//发布坐标消息
 			}
 		}

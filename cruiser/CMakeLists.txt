@@ -146,7 +146,6 @@ add_executable(mobile_msg src/mobile_msg.cpp)
 target_link_libraries(mobile_msg ${catkin_LIBRARIES})
 add_dependencies(mobile_msg cruiser_generate_messages_cpp)
 
-
 add_executable(landing_move_node src/cruiser_landing/landing_move.cpp)
 target_link_libraries(landing_move_node ${catkin_LIBRARIES})
 add_dependencies(landing_move_node cruiser_generate_messages_cpp)

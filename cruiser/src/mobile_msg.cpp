@@ -10,8 +10,6 @@
 #include <dji_sdk/dji_sdk.h>
 #include <cstring>
 
-
-
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
 void Visual_Landing_Cmd(unsigned char* mobile_msg,ros::Publisher pub_landing_flag,CruiserDrone* cruiser);
 void Object_Tracking_Cmd(unsigned char* mobile_msg,ros::Publisher pub_tracking_flag,ros::Publisher pub_tracking_position,CruiserDrone* cruiser);

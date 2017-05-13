@@ -16,8 +16,8 @@ class CruiserDrone
 {
 private:
 	ros::Subscriber DeltaMsgLanding;
-	ros::Subscriber PositionNow;
 	ros::Subscriber DeltaMsgTracking;
+	ros::Subscriber PositionNow;
 
 	ros::ServiceClient send_to_mobile_client;
 
@@ -25,9 +25,9 @@ public:
 	CruiserDrone(ros::NodeHandle& nh)
 	{
 		DeltaMsgLanding = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYLangdingCallback, this);
+		DeltaMsgTracking = nh.subscribe("cruiser/tracking_move",1,&CruiserDrone::DeltaXYTrackingCallback, this);
 		PositionNow = nh.subscribe("cruiser/tracking_position_now",1,&CruiserDrone::PositionNowCallback, this);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
-		DeltaMsgTracking = nh.subscribe("cruiser/tracking_move",1,&CruiserDrone::DeltaXYTrackingCallback, this);
 
 	}
 	void DeltaXYLangdingCallback(cruiser::DeltaPosition Delta)
@@ -81,7 +81,6 @@ public:
 		low = (unsigned char)(num*100 - high*100);
 	}
 };
-
 
 
 #endif /* CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISER_CRUISERDRONE_H_ */

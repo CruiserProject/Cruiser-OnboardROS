@@ -15,17 +15,15 @@ void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition);
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 
 DJIDrone *drone;
-DJI::onboardSDK::ROSAdapter *rosAdapter;
 
 bool alti_flag = false;
 bool delta_pos = false;
 float Height;
 float Height_Last;
-bool landing_flag = false;
-unsigned char data_to_mobile[10] = {0};
 
 int main(int argc,char **argv)
 {
+	unsigned char data_to_mobile[10] = {0};
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
 
@@ -43,35 +41,34 @@ int main(int argc,char **argv)
 	ros::Rate land_rate(1);
     while(ros::ok())
     {
-    	if(landing_flag)drone->gimbal_angle_control(0, -1800, 0, 20);
       	if(alti_flag||delta_pos)
     	{
+
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x06;
     		cruiser->SendMyDataToMobile(data_to_mobile);
     		drone->landing();
-    		drone->release_sdk_permission_control();
+    		drone->gimbal_angle_control(0, -450, 0, 20);
 
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x08;
     		cruiser->SendMyDataToMobile(data_to_mobile);
-    		memset(data_to_mobile, 0, sizeof(data_to_mobile));
-    		drone->gimbal_angle_control(0, -300, 0, 20);
+    		alti_flag = false;
+    		delta_pos = false;
+    		drone->release_sdk_permission_control();
     	}
         ros::spinOnce();
         land_rate.sleep();
-
     }
 }
 
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
-	landing_flag = true;
+	drone->gimbal_angle_control(0, -900, 0, 20);
 	if (new_location.state)
 	{
 		float Velocity_X = new_location.delta_X_meter;
 		float Velocity_Y = new_location.delta_Y_meter;
-
 
 		for(int i = 0;i < 5; i++)
 		{

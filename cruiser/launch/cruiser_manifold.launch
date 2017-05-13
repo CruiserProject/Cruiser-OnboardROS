@@ -30,13 +30,13 @@
 	/>
 	
 	<node
-		pkg="cruiser_landing"
+		pkg="cruiser"
 		type="landing_move_node"
 		name="landing_move_node"
 	/>
 	
 	<node
-		pkg="cruiser_tracking"
+		pkg="cruiser"
 		type="tracking_move_node"
 		name="tracking_move_node"
 	/>
