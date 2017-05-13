@@ -5,12 +5,11 @@
  *      Author: cj
  */
 
-#ifndef CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISER_CRUISERDRONE_H_
-#define CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISER_CRUISERDRONE_H_
+#ifndef CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISERDRONE_H_
+#define CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISERDRONE_H_
 
 #include <ros/ros.h>
 #include <cruiser/CruiserHeader.h>
-#include <dji_sdk/dji_sdk.h>
 
 class CruiserDrone
 {
@@ -24,13 +23,15 @@ private:
 public:
 	CruiserDrone(ros::NodeHandle& nh)
 	{
-		DeltaMsgLanding = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYLangdingCallback, this);
+		DeltaMsgLanding = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYLandingCallback, this);
 		DeltaMsgTracking = nh.subscribe("cruiser/tracking_move",1,&CruiserDrone::DeltaXYTrackingCallback, this);
+
+
 		PositionNow = nh.subscribe("cruiser/tracking_position_now",1,&CruiserDrone::PositionNowCallback, this);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
-
 	}
-	void DeltaXYLangdingCallback(cruiser::DeltaPosition Delta)
+
+	void DeltaXYLandingCallback(cruiser::DeltaPosition Delta)
 	{
 		if (Delta.state)
 		{
@@ -42,6 +43,7 @@ public:
 			SendMyDataToMobile(data_to_mobile);
 		}
 	}
+
 	void DeltaXYTrackingCallback(cruiser::DeltaPosition Delta)
 	{
 		if (Delta.state)
@@ -66,6 +68,23 @@ public:
 		data_to_mobile[5] = (unsigned char)(position.b_height_percent*100);
 		SendMyDataToMobile(data_to_mobile);
 	}
+
+	void SendVtlLandingMsg()
+	{
+		unsigned char data_to_mobile[10] = {0};
+		data_to_mobile[0] = 0x01;
+		data_to_mobile[1] = 0x06;
+		SendMyDataToMobile(data_to_mobile);
+	}
+
+	void SendSucLandingMsg()
+	{
+		unsigned char data_to_mobile[10] = {0};
+		data_to_mobile[0] = 0x01;
+		data_to_mobile[1] = 0x08;
+		SendMyDataToMobile(data_to_mobile);
+	}
+
 	void SendMyDataToMobile(unsigned char* data_to_mobile)
 	{
 		dji_sdk::SendDataToRemoteDevice::Request req;
@@ -73,8 +92,9 @@ public:
 		memcpy(&req.data[0],data_to_mobile,10);
 		dji_sdk::SendDataToRemoteDevice::Response resp;
 		if(send_to_mobile_client.call(req,resp))
-			ROS_INFO_STREAM("send data "<<data_to_mobile[0]<<" "<<data_to_mobile[1]<<" ... to mobile.");
+			ROS_INFO_STREAM("send "<<std::hex<<(int)data_to_mobile[0]<<(int)data_to_mobile[1]);
 	}
+
 	void float2char(float num, unsigned char& high, unsigned char& low)
 	{
 		high = (unsigned char)num;
@@ -83,4 +103,4 @@ public:
 };
 
 
-#endif /* CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISER_CRUISERDRONE_H_ */
+#endif /* CRUISER_ONBOARDROS_CRUISER_INCLUDE_CRUISERDRONE_H_ */

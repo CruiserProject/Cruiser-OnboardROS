@@ -13,14 +13,12 @@
 #include <cruiser/CruiserDrone.h>
 #include <dji_sdk/dji_drone.h>
 
-
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 
 DJIDrone *drone;
-DJI::onboardSDK::ROSAdapter *rosAdapter;
 
 bool alti_flag = false;
 bool delta_pos = false;
@@ -35,16 +33,16 @@ int main(int argc,char **argv)
 
 	drone = new DJIDrone(nh);
 	if(drone->request_sdk_permission_control())
-		ROS_INFO("Get permission control Correct!");
-	ROS_INFO("A");
+		ROS_INFO("Get permission control!");
 
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/tracking_move",1,&DeltaMsgCallback);
 
-
     ros::Rate rate(1);
+
     while(ros::ok())
     {
-    	if(landing_flag)drone->gimbal_angle_control(0, -450, 0, 20);
+    	if(landing_flag)
+    		drone->gimbal_angle_control(0, -450, 0, 20);
         ros::spinOnce();
         rate.sleep();
     }

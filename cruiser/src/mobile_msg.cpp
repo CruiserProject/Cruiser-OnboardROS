@@ -29,7 +29,7 @@ int main(int argc,char **argv)
 	ros::Publisher pub_tracking_flag = nh.advertise<cruiser::Flag>("cruiser/tracking_flag",1);
 	ros::Publisher pub_tracking_position = nh.advertise<cruiser::TrackingPosition>("cruiser/tracking_position",1);
 
-	ros::Rate communicate_rate(10);
+	ros::Rate rate(10);
 
 	while(ros::ok())
 	{
@@ -47,7 +47,7 @@ int main(int argc,char **argv)
 		}
 		memset(mobile_msg, 0, sizeof(mobile_msg));
 		ros::spinOnce();
-		communicate_rate.sleep();
+		rate.sleep();
 	}
 }
 

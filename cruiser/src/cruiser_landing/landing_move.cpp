@@ -6,7 +6,6 @@
 #include <cruiser/CruiserHeader.h>
 #include <cruiser/CruiserDrone.h>
 #include <dji_sdk/dji_drone.h>
-#include <dji_sdk/dji_sdk.h>
 
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -23,7 +22,6 @@ float Height_Last;
 
 int main(int argc,char **argv)
 {
-	unsigned char data_to_mobile[10] = {0};
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
 
@@ -31,34 +29,26 @@ int main(int argc,char **argv)
 	drone = new DJIDrone(nh);
 
 	if(drone->request_sdk_permission_control())
-		ROS_INFO("Get permission control Correct!");
-	ROS_INFO("A");
+		ROS_INFO("Get permission control!");
 
 	ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1,&LocalPositionCallback);
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaMsgCallback);
-	ros::ServiceClient send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
-	ROS_INFO("D");
-	ros::Rate land_rate(1);
+
+	ros::Rate rate(1);
+
     while(ros::ok())
     {
       	if(alti_flag||delta_pos)
     	{
-
-    		data_to_mobile[0] = 0x01;
-    		data_to_mobile[1] = 0x06;
-    		cruiser->SendMyDataToMobile(data_to_mobile);
+      		cruiser->SendVtlLandingMsg();
     		drone->landing();
-    		drone->gimbal_angle_control(0, -450, 0, 20);
-
-    		data_to_mobile[0] = 0x01;
-    		data_to_mobile[1] = 0x08;
-    		cruiser->SendMyDataToMobile(data_to_mobile);
+    		cruiser->SendSucLandingMsg();
     		alti_flag = false;
     		delta_pos = false;
     		drone->release_sdk_permission_control();
     	}
         ros::spinOnce();
-        land_rate.sleep();
+        rate.sleep();
     }
 }
 
@@ -84,6 +74,7 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 		if((new_location.delta_X_meter < 0.2) && (new_location.delta_Y_meter < 0.2)&&(Height < 1.9))
 			delta_pos = true;
 	}
+}
 /*
 	float Velociy_X_max = new_location.delta_X * 2;
 	float Velociy_Y_max = new_location.delta_Y * 2;
@@ -119,7 +110,6 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 		ROS_INFO_STREAM("Y is done!");
 	}
 */
-}
 
 void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 {
@@ -131,7 +121,7 @@ void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 				<< "altitude = "  << LocalPosition.z);
 		drone->request_sdk_permission_control();
 
-		if(Height > 0.8)
+		if(Height > 2)
 		{
 			for(int i = 0;i < 20; i++)
 			{
@@ -146,5 +136,3 @@ void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 		}
 	}
 }
-
-

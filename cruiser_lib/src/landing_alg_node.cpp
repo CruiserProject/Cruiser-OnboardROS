@@ -26,7 +26,6 @@
 #include <dji_sdk/LocalPosition.h>
 #include <cruiser/Flag.h>
 #include <cruiser/DeltaPosition.h>
-//#include <dji_sdk/dji_drone.h>
 
 using namespace std;
 using namespace cv;
@@ -37,7 +36,7 @@ cruiser::DeltaPosition deltaPosition;
 const float sensor_weight=6.17;//相机传感器尺寸数据
 const float sensor_height=4.55;
 const float focal_length=20;//相机等效焦距
-const float optic_angle=94;//相机视角
+//const float optic_angle=94;//相机视角
 
 float height;//定义全局变量，获取当前飞行高度
 static const std::string OPENCV_WINDOW = "landpoint";
@@ -75,7 +74,7 @@ class ImageConverter
 			Landing_flag=nh_.subscribe("cruiser/landing_flag",1,&landingFlagCallback);
 			delta_location=nh_.advertise<cruiser::DeltaPosition>("cruiser/landing_move",1);
 
-			//cv::namedWindow(OPENCV_WINDOW);
+			cv::namedWindow(OPENCV_WINDOW);
 		}
 
 		~ImageConverter()
@@ -94,9 +93,8 @@ class ImageConverter
 			}
 			catch (cv_bridge::Exception& e)
 			{
-//			ROS_ERROR("cv_bridge exception: %s", e.what());
-//			ROS_ERROR("cv_bridge exception: %s", e.what());
-
+				ROS_ERROR("cv_bridge exception: %s", e.what());
+				ROS_ERROR("cv_bridge exception: %s", e.what());
 				return;
 			}
 
@@ -121,7 +119,6 @@ class ImageConverter
 					add_pointy += cvRound(circles[i][1]);
 
 					// circle( srcImage, center, 3, Scalar(0,255,255), -1, 8, 0 );
-
 					// circle( srcImage, center, radius, Scalar(155,50,255), 3, 8, 0 );
 					size = i;
 				}
@@ -133,7 +130,7 @@ class ImageConverter
 				//calculate the parameters in deltaposition
 				if(x==0&&y==0)
 				{
-					ROS_INFO_STREAM("do not detect circle!.");
+					ROS_INFO_STREAM("Do not detect circle.");
 					deltaPosition.state=false;//there is no circle detected,so the state in deltaposition should be false
 					deltaPosition.delta_X_meter=0;
 					deltaPosition.delta_Y_meter=0;
@@ -151,7 +148,7 @@ class ImageConverter
 					int X=srcImage.cols;
 					int Y=srcImage.rows;
 
-					//corordinate transform
+					//coordinate transform
 					x=x/X;
 					y=y/Y;
 					
@@ -162,8 +159,8 @@ class ImageConverter
 					deltaPosition.delta_X_meter=x;
 					deltaPosition.delta_Y_meter=y;
 				}
-				//cv::imshow(OPENCV_WINDOW, srcImage);
-				//cv::waitKey(3);
+				cv::imshow(OPENCV_WINDOW, srcImage);
+				cv::waitKey(3);
 				// Output modified video stream
 				//cv_ptr->image=srcImage;
 				//image_pub_.publish(srcImage.toImageMsg());
@@ -177,10 +174,8 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "landing_alg_node");
   ImageConverter ic;
-  while(ros::ok())
-  {
-    ros::spinOnce();
-  }
+
+  ros::spin();
 
   return 0;
 }
