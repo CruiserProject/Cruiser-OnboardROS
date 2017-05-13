@@ -1,18 +1,12 @@
 #include <ros/ros.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <dji_sdk/dji_drone.h>
 #include <cstdlib>
 #include <stdlib.h>
-#include <actionlib/client/simple_action_client.h>
-#include <actionlib/client/terminal_state.h>
-#include "dji_sdk_lib/DJI_API.h"
-#include "dji_sdk_lib/DJICommonType.h"
-#include <dji_sdk/dji_sdk_node.h>
-#include <dji_sdk/LocalPosition.h>
-#include <cruiser/DeltaPosition.h>
-#include <cruiser/Flag.h>
-#include <dji_sdk/SendDataToRemoteDevice.h>
+#include <cruiser/CruiserHeader.h>
+#include <cruiser/CruiserDrone.h>
+#include <dji_sdk/dji_drone.h>
+#include <dji_sdk/dji_sdk.h>
 
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -27,7 +21,7 @@ bool alti_flag = false;
 bool delta_pos = false;
 float Height;
 float Height_Last;
-//bool landing_flag = false;
+bool landing_flag = false;
 unsigned char data_to_mobile[10] = {0};
 
 int main(int argc,char **argv)
@@ -35,6 +29,7 @@ int main(int argc,char **argv)
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
 
+	CruiserDrone* cruiser = new CruiserDrone(nh);
 	drone = new DJIDrone(nh);
 
 	if(drone->request_sdk_permission_control())
@@ -45,53 +40,45 @@ int main(int argc,char **argv)
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaMsgCallback);
 	ros::ServiceClient send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
 	ROS_INFO("D");
+	ros::Rate land_rate(1);
     while(ros::ok())
     {
-
+    	if(landing_flag)drone->gimbal_angle_control(0, -1800, 0, 20);
       	if(alti_flag||delta_pos)
     	{
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x06;
-      		dji_sdk::SendDataToRemoteDevice::Request land_req;
-      		land_req.data.resize(10);
-    		memcpy(&land_req.data[0],data_to_mobile,10);
-    		dji_sdk::SendDataToRemoteDevice::Response land_resp;
-    		bool success = send_to_mobile_client.call(land_req,land_resp);
-    		if(success)ROS_INFO("0104");
-    		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+    		cruiser->SendMyDataToMobile(data_to_mobile);
     		drone->landing();
     		drone->release_sdk_permission_control();
-//    		ros::shutdown();
-//    		landing_flag =false;
+
     		data_to_mobile[0] = 0x01;
     		data_to_mobile[1] = 0x08;
-      		dji_sdk::SendDataToRemoteDevice::Request land_end_req;
-      		land_end_req.data.resize(10);
-    		memcpy(&land_end_req.data[0],data_to_mobile,10);
-    		dji_sdk::SendDataToRemoteDevice::Response land_end_resp;
-    		bool land_success = send_to_mobile_client.call(land_end_req,land_end_resp);
-    		if(success)ROS_INFO("0108");
+    		cruiser->SendMyDataToMobile(data_to_mobile);
     		memset(data_to_mobile, 0, sizeof(data_to_mobile));
+    		drone->gimbal_angle_control(0, -300, 0, 20);
     	}
         ros::spinOnce();
+        land_rate.sleep();
 
     }
 }
 
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
-
+	landing_flag = true;
 	if (new_location.state)
 	{
-		//landing_flag = new_location.state;
 		float Velocity_X = new_location.delta_X_meter;
 		float Velocity_Y = new_location.delta_Y_meter;
 
 
-		for(int i = 0;i < 20; i++)
+		for(int i = 0;i < 5; i++)
 		{
 			drone->attitude_control(0x40,Velocity_X,Velocity_Y,0,0);//水平速度
 			usleep(20000);
+			drone->attitude_control(0x40,0,0,0,0);//水平速度
+			usleep(60000);
 		}
 
 		ROS_INFO_STREAM(std::setprecision(2) << std::fixed

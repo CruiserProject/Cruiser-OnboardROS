@@ -124,9 +124,9 @@ CATKIN_DEPENDS message_runtime
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(
+  include
   ${catkin_INCLUDE_DIRS}
 )
-
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/cruiser.cpp
@@ -145,6 +145,24 @@ include_directories(
 add_executable(mobile_msg src/mobile_msg.cpp)
 target_link_libraries(mobile_msg ${catkin_LIBRARIES})
 add_dependencies(mobile_msg cruiser_generate_messages_cpp)
+
+
+add_executable(landing_move_node src/cruiser_landing/landing_move.cpp)
+target_link_libraries(landing_move_node ${catkin_LIBRARIES})
+add_dependencies(landing_move_node cruiser_generate_messages_cpp)
+
+add_executable(test_pub_location src/cruiser_landing/testLocation.cpp)
+target_link_libraries(test_pub_location ${catkin_LIBRARIES})
+add_dependencies(test_pub_location cruiser_generate_messages_cpp)
+
+add_executable(tracking_move_node src/cruiser_tracking/tracking_move.cpp)
+target_link_libraries(tracking_move_node ${catkin_LIBRARIES})
+add_dependencies(tracking_move_node cruiser_generate_messages_cpp)
+
+add_executable(test_pub_tracking src/cruiser_tracking/testTracking.cpp)
+target_link_libraries(test_pub_tracking ${catkin_LIBRARIES})
+add_dependencies(test_pub_tracking cruiser_generate_messages_cpp)
+
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -7,17 +7,12 @@
 #include <ros/ros.h>
 #include <stdio.h>
 #include <stdint.h>
-#include <dji_sdk/dji_drone.h>
 #include <cstdlib>
 #include <stdlib.h>
-#include <actionlib/client/simple_action_client.h>
-#include <actionlib/client/terminal_state.h>
-#include "dji_sdk_lib/DJI_API.h"
-#include "dji_sdk_lib/DJICommonType.h"
-#include <dji_sdk/dji_sdk_node.h>
-#include <dji_sdk/LocalPosition.h>
-#include <cruiser/DeltaPosition.h>
-#include <cruiser/Flag.h>
+#include <cruiser/CruiserHeader.h>
+#include <cruiser/CruiserDrone.h>
+#include <dji_sdk/dji_drone.h>
+
 
 using namespace DJI;
 using namespace DJI::onboardSDK;
@@ -27,10 +22,11 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 DJIDrone *drone;
 DJI::onboardSDK::ROSAdapter *rosAdapter;
 
-int alti_flag = 0;
-int delta_pos = 0;
+bool alti_flag = false;
+bool delta_pos = false;
 float Height;
 float Height_Last;
+bool landing_flag = false;
 
 int main(int argc,char **argv)
 {
@@ -44,15 +40,11 @@ int main(int argc,char **argv)
 
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/tracking_move",1,&DeltaMsgCallback);
 
+
     ros::Rate rate(1);
     while(ros::ok())
     {
-      	if(alti_flag||delta_pos)
-    	{
-    		drone->landing();
-    		drone->release_sdk_permission_control();
-//    		ros::shutdown();
-    	}
+    	if(landing_flag)drone->gimbal_angle_control(0, -450, 0, 20);
         ros::spinOnce();
         rate.sleep();
     }
@@ -60,7 +52,7 @@ int main(int argc,char **argv)
 
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
-
+	landing_flag = true;
 	if (new_location.state)
 	{
 		float Velocity_X = new_location.delta_X_meter;
