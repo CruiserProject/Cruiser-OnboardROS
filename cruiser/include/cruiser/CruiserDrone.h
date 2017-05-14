@@ -17,18 +17,21 @@ private:
 	ros::Subscriber DeltaMsgLanding;
 	ros::Subscriber DeltaMsgTracking;
 	ros::Subscriber PositionNow;
-
+	ros::Subscriber Height;
 	ros::ServiceClient send_to_mobile_client;
 
+	float HeightNow = 0.0;
+
 public:
+
 	CruiserDrone(ros::NodeHandle& nh)
 	{
 		DeltaMsgLanding = nh.subscribe("cruiser/landing_move",1,&CruiserDrone::DeltaXYLandingCallback, this);
 		DeltaMsgTracking = nh.subscribe("cruiser/tracking_move",1,&CruiserDrone::DeltaXYTrackingCallback, this);
-
-
 		PositionNow = nh.subscribe("cruiser/tracking_position_now",1,&CruiserDrone::PositionNowCallback, this);
+		Height = nh.subscribe("/dji_sdk/local_position",1,&CruiserDrone::AltitudePositionCallback, this);
 		send_to_mobile_client = nh.serviceClient<dji_sdk::SendDataToRemoteDevice>("dji_sdk/send_data_to_remote_device");
+
 	}
 
 	void DeltaXYLandingCallback(cruiser::DeltaPosition Delta)
@@ -67,6 +70,16 @@ public:
 		data_to_mobile[4] = (unsigned char)(position.b_width_percent*100);
 		data_to_mobile[5] = (unsigned char)(position.b_height_percent*100);
 		SendMyDataToMobile(data_to_mobile);
+	}
+
+	void AltitudePositionCallback(dji_sdk::LocalPosition AltitudeNow)
+	{
+		this->HeightNow = AltitudeNow.z;
+	}
+
+	float GetHeightNow()
+	{
+		return this->HeightNow;
 	}
 
 	void SendVtlLandingMsg()

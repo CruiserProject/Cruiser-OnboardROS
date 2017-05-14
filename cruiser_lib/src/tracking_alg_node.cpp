@@ -45,9 +45,10 @@ const float degree=45; //相机与地面的夹角
 bool drawing_box = false;
 bool gotBB = false;
 float height;
-bool flag=false;
-bool flags=false;
 bool state=true;
+bool positionFlag=false;
+bool startFlag=false;
+bool initFlag=false;
 float x_lt=0,y_lt=0,x_rb=0,y_rb=0;
 
 bool HOG = true;
@@ -119,53 +120,57 @@ void mouseHandler(int event, int x, int y, int flags, void *param)
 }
 */
 //get drone's global height,height in this function is a global variable
-void localPositionCallBack(const dji_sdk::LocalPosition &h)
+void localPositionCallback(const dji_sdk::LocalPosition &h)
 {
 	height=h.z;
 	ROS_INFO_STREAM("tracking_alg_node : height changed.");
 }
 
-void getFlagCb(const cruiser::Flag &msg)
+void getFlagCallback(const cruiser::Flag &msg)
 {
-	flags=msg.flag;
+	if(msg.flag)
+		startFlag=true;
+	else
+	{
+		positionFlag=false;
+		startFlag=false;
+		initFlag=false;
+	}
 	ROS_INFO_STREAM("tracking_alg_node : flag changed.");
 }
 
-void getPositionCb(const cruiser::TrackingPosition &msg)
+void getPositionCallback(const cruiser::TrackingPosition &msg)
 {
-      if(flags)
-      {
-        if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
-        {
-          x_lt=msg.a_width_percent;
-          y_lt=msg.a_height_percent;
-          x_rb=msg.b_width_percent;
-          y_rb=msg.b_height_percent;
-        }
-        else if(msg.a_width_percent>msg.b_width_percent&&msg.a_height_percent>msg.b_height_percent)
-        {
-          x_lt=msg.b_width_percent;
-          y_lt=msg.b_height_percent;
-          x_rb=msg.a_width_percent;
-          y_rb=msg.a_height_percent;
-        }
-        else if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent>msg.b_height_percent)
-        {
-          x_lt=msg.a_width_percent;
-          y_lt=msg.b_height_percent;
-          x_rb=msg.b_width_percent;
-          y_rb=msg.a_height_percent;
-        }
-        else if(msg.a_width_percent>msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
-        {
-          x_lt=msg.b_width_percent;
-          y_lt=msg.a_height_percent;
-          x_rb=msg.a_width_percent;
-          y_rb=msg.b_height_percent;
-        }
-        flag=true;
-    	ROS_INFO_STREAM("tracking_alg_node : get tracking position.");
-      }
+	if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
+	{
+		x_lt=msg.a_width_percent;
+		y_lt=msg.a_height_percent;
+		x_rb=msg.b_width_percent;
+		y_rb=msg.b_height_percent;
+	}
+	else if(msg.a_width_percent>msg.b_width_percent&&msg.a_height_percent>msg.b_height_percent)
+	{
+		x_lt=msg.b_width_percent;
+		y_lt=msg.b_height_percent;
+		x_rb=msg.a_width_percent;
+		y_rb=msg.a_height_percent;
+	}
+	else if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent>msg.b_height_percent)
+	{
+		x_lt=msg.a_width_percent;
+		y_lt=msg.b_height_percent;
+		x_rb=msg.b_width_percent;
+		y_rb=msg.a_height_percent;
+	}
+	else if(msg.a_width_percent>msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
+	{
+		x_lt=msg.b_width_percent;
+		y_lt=msg.a_height_percent;
+		x_rb=msg.a_width_percent;
+		y_rb=msg.b_height_percent;
+	}
+	positionFlag=true;
+	ROS_INFO_STREAM("tracking_alg_node : get tracking position.");
 }
 
 class ImageConverter
@@ -187,11 +192,11 @@ class ImageConverter
   	ImageConverter():it_(nh_)
   	{
       // Subscribe to input video feed and publish output video feed
-      image_sub_ = it_.subscribe("/dji_sdk/image_raw", 1,&ImageConverter::imageCb, this);
+      image_sub_ = it_.subscribe("/dji_sdk/image_raw", 1,&ImageConverter::imageCallback, this);
       
-      rect_sub = nh_.subscribe("cruiser/tracking_position", 1,&getPositionCb);
-   	  tracking_flag=nh_.subscribe("cruiser/tracking_flag",1,&getFlagCb);
-      Height=nh_.subscribe("/dji_sdk/local_position",1,&localPositionCallBack);
+      rect_sub = nh_.subscribe("cruiser/tracking_position", 1,&getPositionCallback);
+   	  tracking_flag=nh_.subscribe("cruiser/tracking_flag",1,&getFlagCallback);
+      Height=nh_.subscribe("/dji_sdk/local_position",1,&localPositionCallback);
       pub=nh_.advertise<cruiser::DeltaPosition>("cruiser/tracking_move",1);
       pubs=nh_.advertise<cruiser::TrackingPosition>("cruiser/tracking_position_now",1);
       cv::namedWindow(OPENCV_WINDOW);
@@ -202,9 +207,9 @@ class ImageConverter
     	cv::destroyWindow(OPENCV_WINDOW);
   	}
 
-  	void imageCb(const sensor_msgs::ImageConstPtr& msg)
+  	void imageCallback(const sensor_msgs::ImageConstPtr& msg)
   	{
-      if(flags)
+      if(startFlag&&positionFlag)
       {
     	ROS_INFO_STREAM("tracking_alg_node : start tracking.");
         cv_bridge::CvImagePtr cv_ptr;
@@ -230,7 +235,7 @@ class ImageConverter
 					return ;
 			}
 */
-        if(flag)
+        if(!initFlag)
         {
           //cvSetMouseCallback("tracking",NULL, NULL);
           box.x=x_lt*1280;
@@ -238,10 +243,10 @@ class ImageConverter
           box.width=(x_rb-x_lt)*1280;
           box.height=(y_rb-x_lt)*720;
           tracker.init(box, capture);
-          flag=false;
+          initFlag=true;
         }
 
-        if(!flag)
+        if(initFlag)
         {
           result = tracker.update(capture);
           deltaPosition.state=state;
@@ -263,14 +268,14 @@ class ImageConverter
               waitKey(10);
             }
           }
+          pub.publish(deltaPosition);
+          ROS_INFO_STREAM("tracking_alg_node : publish delta position "
+  				<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);
+          pubs.publish(myPosition);
+          ROS_INFO_STREAM("tracking_alg_node : publish delta position "
+  				<< myPosition.a_width_percent << " " << myPosition.a_height_percent
+  				<< myPosition.b_width_percent << " " << myPosition.b_height_percent);
         }
-        pub.publish(deltaPosition);
-		ROS_INFO_STREAM("tracking_alg_node : publish delta position "
-				<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);
-        pubs.publish(myPosition);
-		ROS_INFO_STREAM("tracking_alg_node : publish delta position "
-				<< myPosition.a_width_percent << " " << myPosition.a_height_percent
-				<< myPosition.b_width_percent << " " << myPosition.b_height_percent);
       }
     }
 };

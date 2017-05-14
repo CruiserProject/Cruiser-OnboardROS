@@ -40,7 +40,7 @@ const float focal_length=20;//相机等效焦距
 
 float height;//定义全局变量，获取当前飞行高度
 static const std::string OPENCV_WINDOW = "landpoint";
-bool flag=false;
+bool positionFlag=false;
 
 //get the local height of drone
 void localPositionCallback(const dji_sdk::LocalPosition& h)
@@ -52,7 +52,7 @@ void localPositionCallback(const dji_sdk::LocalPosition& h)
 //get the flag which depends whether to execute the hough circle programme
 void landingFlagCallback(const cruiser::Flag& msg)
 {
-	flag=msg.flag;
+	positionFlag=msg.flag;
 	ROS_INFO_STREAM("landing_alg_node : flag changed.");
 }
 
@@ -101,7 +101,7 @@ class ImageConverter
 				return;
 			}
 
-			if(flag)
+			if(positionFlag)
 			{
 				ROS_INFO_STREAM("landing_alg_node : start detecting.");
 				srcImage=cv_ptr->image.clone();
