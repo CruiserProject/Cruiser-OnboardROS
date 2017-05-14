@@ -7,7 +7,6 @@
 #include <ros/ros.h>
 #include <cruiser/CruiserHeader.h>
 #include <cruiser/CruiserDrone.h>
-#include <dji_sdk/dji_sdk.h>
 #include <cstring>
 
 void GetMobileMsgCallback(const dji_sdk::TransparentTransmissionData& mobileData);
@@ -30,6 +29,8 @@ int main(int argc,char **argv)
 	ros::Publisher pub_tracking_position = nh.advertise<cruiser::TrackingPosition>("cruiser/tracking_position",1);
 
 	ros::Rate rate(10);
+
+	ROS_INFO_STREAM("mobile_msg node initialization.");
 
 	while(ros::ok())
 	{

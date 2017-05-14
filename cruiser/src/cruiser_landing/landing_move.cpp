@@ -28,13 +28,13 @@ int main(int argc,char **argv)
 	CruiserDrone* cruiser = new CruiserDrone(nh);
 	drone = new DJIDrone(nh);
 
-	if(drone->request_sdk_permission_control())
-		ROS_INFO("Get permission control!");
-
 	ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1,&LocalPositionCallback);
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&DeltaMsgCallback);
 
 	ros::Rate rate(1);
+
+	if(drone->request_sdk_permission_control())
+		ROS_INFO_STREAM("landing_move_node : initialization and get control.");
 
     while(ros::ok())
     {
@@ -45,31 +45,33 @@ int main(int argc,char **argv)
     		cruiser->SendSucLandingMsg();
     		alti_flag = false;
     		delta_pos = false;
-    		drone->release_sdk_permission_control();
+    		//if(drone->release_sdk_permission_control())
+    			//ROS_INFO_STREAM("landing_move_node : release control.");
     	}
-        ros::spinOnce();
         rate.sleep();
+        ros::spinOnce();
     }
 }
 
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
-	drone->gimbal_angle_control(0, -900, 0, 20);
+	if(drone->gimbal_angle_control(0, -900, 0, 10))
+		ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
+	usleep(100000);
 	if (new_location.state)
 	{
 		float Velocity_X = new_location.delta_X_meter;
 		float Velocity_Y = new_location.delta_Y_meter;
 
-		for(int i = 0;i < 5; i++)
+		for(int i = 0;i < 40; i++)
 		{
 			drone->attitude_control(0x40,Velocity_X,Velocity_Y,0,0);//水平速度
 			usleep(20000);
-			drone->attitude_control(0x40,0,0,0,0);//水平速度
-			usleep(60000);
 		}
 
 		ROS_INFO_STREAM(std::setprecision(2) << std::fixed
-				<< "position = (" << new_location.delta_X_meter << "," << new_location.delta_Y_meter << ")");
+				<< "landing_move_node : move position = (" << new_location.delta_X_meter << ","
+				<< new_location.delta_Y_meter << ")");
 
 		if((new_location.delta_X_meter < 0.2) && (new_location.delta_Y_meter < 0.2)&&(Height < 1.9))
 			delta_pos = true;
@@ -113,22 +115,22 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 
 void LocalPositionCallback(const dji_sdk::LocalPosition& LocalPosition)
 {
+
 	if(delta_pos)
 	{
 		Height_Last = Height;
 		Height = LocalPosition.z;
 		ROS_INFO_STREAM(std::setprecision(2) << std::fixed
-				<< "altitude = "  << LocalPosition.z);
+				<< "landing_move_node : altitude = "  << LocalPosition.z);
 		drone->request_sdk_permission_control();
 
-		if(Height > 2)
+		if(Height > 1)
 		{
 			for(int i = 0;i < 20; i++)
 			{
 				drone->attitude_control(0x40,0,0,-1,0);//水平速度
 				usleep(20000);
 			}
-			ROS_INFO_STREAM("I changed the height!");
 		}
 		else
 		{

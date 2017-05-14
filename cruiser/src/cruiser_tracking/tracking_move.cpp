@@ -32,12 +32,13 @@ int main(int argc,char **argv)
 	ros::NodeHandle nh;
 
 	drone = new DJIDrone(nh);
-	if(drone->request_sdk_permission_control())
-		ROS_INFO("Get permission control!");
 
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/tracking_move",1,&DeltaMsgCallback);
 
     ros::Rate rate(1);
+
+	if(drone->request_sdk_permission_control())
+		ROS_INFO_STREAM("tracking_move_node : initialization and get control.");
 
     while(ros::ok())
     {

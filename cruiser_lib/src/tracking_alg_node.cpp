@@ -40,11 +40,10 @@ const float sensor_width=6.17; //相机传感器尺寸参数
 const float sensor_height=4.55;
 const float focal_length=20; //相机等效焦距
 const float optic_angle=94; //相机视角
-const float degree=0; //相机与地面的夹角
+const float degree=45; //相机与地面的夹角
 
 bool drawing_box = false;
 bool gotBB = false;
-//my own data
 float height;
 bool flag=false;
 bool flags=false;
@@ -59,19 +58,19 @@ bool LAB = false;
 
 KCFTracker tracker;
 Rect result;
-//above are all global
 Rect box;
 Mat capture;
 static const std::string OPENCV_WINDOW = "tracking";
 
 void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 {
+	ROS_INFO_STREAM("tracking_alg_node : coordinate transformed.");
 	//图像坐标原点转换为像素坐标
 	float v0=sensor_width/2;
 	float u0=sensor_height/2;
 
 	//计算fx.fy
-	float fx=focal_length/(sensor_width/1080);
+	float fx=focal_length/(sensor_width/1280);
 	float fy=focal_length/(sensor_height/720);
 
 	//依据单目测距数学模型进行坐标转换
@@ -122,12 +121,14 @@ void mouseHandler(int event, int x, int y, int flags, void *param)
 //get drone's global height,height in this function is a global variable
 void localPositionCallBack(const dji_sdk::LocalPosition &h)
 {
-  height=h.z;
+	height=h.z;
+	ROS_INFO_STREAM("tracking_alg_node : height changed.");
 }
 
 void getFlagCb(const cruiser::Flag &msg)
 {
-  flags=msg.flag;
+	flags=msg.flag;
+	ROS_INFO_STREAM("tracking_alg_node : flag changed.");
 }
 
 void getPositionCb(const cruiser::TrackingPosition &msg)
@@ -163,6 +164,7 @@ void getPositionCb(const cruiser::TrackingPosition &msg)
           y_rb=msg.b_height_percent;
         }
         flag=true;
+    	ROS_INFO_STREAM("tracking_alg_node : get tracking position.");
       }
 }
 
@@ -204,6 +206,7 @@ class ImageConverter
   	{
       if(flags)
       {
+    	ROS_INFO_STREAM("tracking_alg_node : start tracking.");
         cv_bridge::CvImagePtr cv_ptr;
         try
         {
@@ -231,7 +234,7 @@ class ImageConverter
         {
           //cvSetMouseCallback("tracking",NULL, NULL);
           box.x=x_lt*1280;
-					box.y=y_lt*720;
+          box.y=y_lt*720;
           box.width=(x_rb-x_lt)*1280;
           box.height=(y_rb-x_lt)*720;
           tracker.init(box, capture);
@@ -242,6 +245,7 @@ class ImageConverter
         {
           result = tracker.update(capture);
           deltaPosition.state=state;
+
           //caluate the deltaPosition in the ground coordinate system
           trackingCoordCal(result.x+result.width/2,result.y+result.height/2,deltaPosition.delta_X_meter,deltaPosition.delta_Y_meter);
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
@@ -261,20 +265,24 @@ class ImageConverter
           }
         }
         pub.publish(deltaPosition);
+		ROS_INFO_STREAM("tracking_alg_node : publish delta position "
+				<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);
         pubs.publish(myPosition);
+		ROS_INFO_STREAM("tracking_alg_node : publish delta position "
+				<< myPosition.a_width_percent << " " << myPosition.a_height_percent
+				<< myPosition.b_width_percent << " " << myPosition.b_height_percent);
       }
     }
 };
 
 int main(int argc, char** argv)
 {
- 	 ros::init(argc, argv, "tracking_alg_node");
-     ImageConverter ic;
-     //cvSetMouseCallback("tracking", mouseHandler, NULL);
+	ros::init(argc, argv, "tracking_alg_node");
+	ImageConverter ic;
+	//cvSetMouseCallback("tracking", mouseHandler, NULL);
+	tracker=KCFTracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
 
-	 // Create KCFTracker object
-	 tracker=KCFTracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
-	 // Tracker results
-	 ros::spin();
-	 return 0;
+	ROS_INFO_STREAM("tracking_alg_node : initialization.");
+	ros::spin();
+	return 0;
 }

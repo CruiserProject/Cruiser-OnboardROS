@@ -46,12 +46,14 @@ bool flag=false;
 void localPositionCallback(const dji_sdk::LocalPosition& h)
 {
 	height=h.z;
+	ROS_INFO_STREAM("landing_alg_node : drone height changed.");
 }
 
-//get the flag which depends whether to execute the houghcircle programme
+//get the flag which depends whether to execute the hough circle programme
 void landingFlagCallback(const cruiser::Flag& msg)
 {
 	flag=msg.flag;
+	ROS_INFO_STREAM("landing_alg_node : flag changed.");
 }
 
 class ImageConverter
@@ -84,6 +86,7 @@ class ImageConverter
 
 		void imageCb(const sensor_msgs::ImageConstPtr& msg)
 		{
+
 			cv_bridge::CvImagePtr cv_ptr;
 			sensor_msgs::Image im;
 
@@ -100,6 +103,7 @@ class ImageConverter
 
 			if(flag)
 			{
+				ROS_INFO_STREAM("landing_alg_node : start detecting.");
 				srcImage=cv_ptr->image.clone();
 				cv::resize(srcImage,srcImage,Size(640,480));
 				Mat midImage;//临时变量和目标图的定义
@@ -130,15 +134,15 @@ class ImageConverter
 				//calculate the parameters in deltaposition
 				if(x==0&&y==0)
 				{
-					ROS_INFO_STREAM("Do not detect circle.");
+					ROS_INFO_STREAM("landing_alg_node : do not detect circle.");
 					deltaPosition.state=false;//there is no circle detected,so the state in deltaposition should be false
 					deltaPosition.delta_X_meter=0;
 					deltaPosition.delta_Y_meter=0;
 				}
 				else
 				{
+					ROS_INFO_STREAM("landing_alg_node : detect circle.");
 					deltaPosition.state=true;//if any circle is detected,the state should be true
-					ROS_INFO_STREAM("Detect circle.");
 					Point center(x, y);
 					cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
 					circle(srcImage, center, 3, Scalar(0, 59, 255), -1, 8, 0);
@@ -166,16 +170,18 @@ class ImageConverter
 				//image_pub_.publish(srcImage.toImageMsg());
    			    //ROS_INFO_STREAM("delta_X = "<< new_delta.delta_X << " delta_Y = " << new_delta.delta_Y <<" delta_flag ="<< new_delta.flag);
 				delta_location.publish(deltaPosition);//发布坐标消息
+				ROS_INFO_STREAM("landing_alg_node : publish delta position"
+						<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);
 			}
 		}
 };
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "landing_alg_node");
-  ImageConverter ic;
+	ros::init(argc, argv, "landing_alg_node");
+	ImageConverter ic;
+	ROS_INFO_STREAM("landing_alg_node : initialization.");
 
-  ros::spin();
-
-  return 0;
+	ros::spin();
+	return 0;
 }
