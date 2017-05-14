@@ -27,6 +27,7 @@
 		pkg="cruiser_lib"
 		type="landing_alg_node"
 		name="landing_alg_node"
+		launch-prefix="xterm -e"
 	/>
 	
 	<node

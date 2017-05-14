@@ -71,8 +71,8 @@ void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 	float u0=sensor_height/2;
 
 	//计算fx.fy
-	float fx=focal_length/(sensor_width/1280);
-	float fy=focal_length/(sensor_height/720);
+	float fx=focal_length/(sensor_width/640.0);
+	float fy=focal_length/(sensor_height/360.0);
 
 	//依据单目测距数学模型进行坐标转换
 	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*sin(degree-atan((y-v0)/fy))));
@@ -223,6 +223,8 @@ class ImageConverter
           return ;
         }
         capture=cv_ptr->image.clone();   //read camera
+        cv::resize(capture,capture,Size(640,360));
+        
 
   /*		if(!gotBB)
 			{
@@ -238,10 +240,10 @@ class ImageConverter
         if(!initFlag)
         {
           //cvSetMouseCallback("tracking",NULL, NULL);
-          box.x=x_lt*1280;
-          box.y=y_lt*720;
-          box.width=(x_rb-x_lt)*1280;
-          box.height=(y_rb-x_lt)*720;
+          box.x=x_lt*640;
+          box.y=y_lt*360;
+          box.width=(x_rb-x_lt)*640;
+          box.height=(y_rb-x_lt)*360;
           tracker.init(box, capture);
           initFlag=true;
         }
@@ -254,12 +256,12 @@ class ImageConverter
           //caluate the deltaPosition in the ground coordinate system
           trackingCoordCal(result.x+result.width/2,result.y+result.height/2,deltaPosition.delta_X_meter,deltaPosition.delta_Y_meter);
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
-          //rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
+          rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
           //msg.a_width_percent msg.b_width_percent msg.a_height_percent msg.b_height_percent
-          myPosition.a_width_percent=result.x/1280.0;
-          myPosition.a_height_percent=result.y/720.0;
-          myPosition.b_width_percent=(result.x+result.width)/1280.0;
-          myPosition.b_height_percent=(result.y+result.height)/720.0;
+          myPosition.a_width_percent=result.x/640.0;
+          myPosition.a_height_percent=result.y/360.0;
+          myPosition.b_width_percent=(result.x+result.width)/640.0;
+          myPosition.b_height_percent=(result.y+result.height)/360.0;
           if(!SILENT)
           {
             if (!capture.empty())
