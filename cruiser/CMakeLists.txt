@@ -162,6 +162,9 @@ add_executable(test_pub_tracking src/cruiser_tracking/testTracking.cpp)
 target_link_libraries(test_pub_tracking ${catkin_LIBRARIES})
 add_dependencies(test_pub_tracking cruiser_generate_messages_cpp)
 
+add_executable(test_gimbal_alone src/cruiser_landing/testgimbal_alone.cpp)
+target_link_libraries(test_gimbal_alone ${catkin_LIBRARIES})
+add_dependencies(test_gimbal_alone cruiser_generate_messages_cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the

@@ -105,7 +105,7 @@ class ImageConverter
 			{
 				ROS_INFO_STREAM("landing_alg_node : start detecting.");
 				srcImage=cv_ptr->image.clone();
-				cv::resize(srcImage,srcImage,Size(640,480));
+				cv::resize(srcImage,srcImage,Size(640,360));
 				Mat midImage;//临时变量和目标图的定义
 				cvtColor(srcImage,midImage, CV_BGR2GRAY);//转化边缘检测后的图为灰度图
 				GaussianBlur( midImage, midImage, Size(9, 9), 2, 2 );

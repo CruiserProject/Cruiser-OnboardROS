@@ -20,11 +20,8 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
 
 DJIDrone *drone;
 
-bool alti_flag = false;
-bool delta_pos = false;
-float Height;
-float Height_Last;
-bool landing_flag = false;
+
+bool tracking_flag = false;
 
 int main(int argc,char **argv)
 {
@@ -42,8 +39,9 @@ int main(int argc,char **argv)
 
     while(ros::ok())
     {
-    	if(landing_flag)
-    		drone->gimbal_angle_control(0, -450, 0, 20);
+    	if(tracking_flag)
+    		drone->gimbal_angle_control(0, -450, 0, 10);
+        tracking_flag = false;
         ros::spinOnce();
         rate.sleep();
     }
@@ -51,7 +49,7 @@ int main(int argc,char **argv)
 
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
-	landing_flag = true;
+	tracking_flag = true;
 	if (new_location.state)
 	{
 		float Velocity_X = new_location.delta_X_meter;

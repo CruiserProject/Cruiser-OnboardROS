@@ -256,10 +256,10 @@ class ImageConverter
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
           //rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
           //msg.a_width_percent msg.b_width_percent msg.a_height_percent msg.b_height_percent
-          myPosition.a_width_percent=result.x/1280;
-          myPosition.a_height_percent=result.x/720;
-          myPosition.b_width_percent=(result.x+result.width)/1280;
-          myPosition.b_height_percent=(result.y+result.height)/720;
+          myPosition.a_width_percent=result.x/1280.0;
+          myPosition.a_height_percent=result.y/720.0;
+          myPosition.b_width_percent=(result.x+result.width)/1280.0;
+          myPosition.b_height_percent=(result.y+result.height)/720.0;
           if(!SILENT)
           {
             if (!capture.empty())

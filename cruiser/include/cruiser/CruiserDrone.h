@@ -52,7 +52,7 @@ public:
 		if (Delta.state)
 		{
 			unsigned char data_to_mobile[10] = {0};
-			data_to_mobile[0] = 0x01;
+			data_to_mobile[0] = 0x02;
 			data_to_mobile[1] = 0x42;
 			this->float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
 			this->float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
