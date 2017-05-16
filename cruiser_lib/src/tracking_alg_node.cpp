@@ -35,7 +35,7 @@
 
 using namespace std;
 using namespace cv;
-
+bool is_first_return=false;    //返回给onboard进行相机调整
 const float sensor_width=6.17; //相机传感器尺寸参数
 const float sensor_height=4.55;
 const float focal_length=20; //相机等效焦距
@@ -73,10 +73,18 @@ void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 	//计算fx.fy
 	float fx=focal_length/(sensor_width/640.0);
 	float fy=focal_length/(sensor_height/360.0);
-
+    if(is_first_return)
+    {
+    	delta_x=-100.0;
+    	delta_y=-100.0;
+    	is_first_return=false;
+    }
+    else
 	//依据单目测距数学模型进行坐标转换
-	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*sin(degree-atan((y-v0)/fy))));
-	delta_y=height/tan(degree-atan((y-v0)/fy));
+	{
+    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*sin(degree-atan((y-v0)/fy))));
+    	delta_y=height/tan(degree-atan((y-v0)/fy));
+	}
 }
 /*void drawBox(Mat& image, CvRect box, Scalar color, int thick)
 {
@@ -129,9 +137,15 @@ void localPositionCallback(const dji_sdk::LocalPosition &h)
 void getFlagCallback(const cruiser::Flag &msg)
 {
 	if(msg.flag)
-		startFlag=true;
-	else
 	{
+
+		is_first_return=true;
+		startFlag=true;
+
+	}
+
+	else
+	{	is_first_return=false;
 		positionFlag=false;
 		startFlag=false;
 		initFlag=false;
