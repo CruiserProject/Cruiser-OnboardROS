@@ -61,7 +61,7 @@ KCFTracker tracker;
 Rect result;
 Rect box;
 Mat capture;
-static const std::string OPENCV_WINDOW = "tracking";
+//static const std::string OPENCV_WINDOW = "tracking";
 
 void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 {
@@ -199,12 +199,12 @@ class ImageConverter
       Height=nh_.subscribe("/dji_sdk/local_position",1,&localPositionCallback);
       pub=nh_.advertise<cruiser::DeltaPosition>("cruiser/tracking_move",1);
       pubs=nh_.advertise<cruiser::TrackingPosition>("cruiser/tracking_position_now",1);
-      cv::namedWindow(OPENCV_WINDOW);
+    //  cv::namedWindow(OPENCV_WINDOW);
   	}
 
   	~ImageConverter()
   	{
-    	cv::destroyWindow(OPENCV_WINDOW);
+    //	cv::destroyWindow(OPENCV_WINDOW);
   	}
 
   	void imageCallback(const sensor_msgs::ImageConstPtr& msg)
@@ -256,20 +256,20 @@ class ImageConverter
           //caluate the deltaPosition in the ground coordinate system
           trackingCoordCal(result.x+result.width/2,result.y+result.height/2,deltaPosition.delta_X_meter,deltaPosition.delta_Y_meter);
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
-          rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
+         // rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
           //msg.a_width_percent msg.b_width_percent msg.a_height_percent msg.b_height_percent
           myPosition.a_width_percent=result.x/640.0;
           myPosition.a_height_percent=result.y/360.0;
           myPosition.b_width_percent=(result.x+result.width)/640.0;
           myPosition.b_height_percent=(result.y+result.height)/360.0;
-          if(!SILENT)
-          {
-            if (!capture.empty())
-            {
-              imshow(OPENCV_WINDOW, capture);
-              waitKey(10);
-            }
-          }
+          //if(!SILENT)
+          //{
+          //  if (!capture.empty())
+          //  {
+          //    imshow(OPENCV_WINDOW, capture);
+          //    waitKey(10);
+          //  }
+          //}
           pub.publish(deltaPosition);
           ROS_INFO_STREAM("tracking_alg_node : publish delta position "
   				<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);

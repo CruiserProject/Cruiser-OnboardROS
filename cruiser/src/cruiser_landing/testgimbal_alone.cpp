@@ -18,6 +18,7 @@ int main(int argc,char **argv)
 	ros::NodeHandle nh;
 
 	DJIDrone *drone = new DJIDrone(nh);
+	drone->request_sdk_permission_control();
 
     while(ros::ok())
     {

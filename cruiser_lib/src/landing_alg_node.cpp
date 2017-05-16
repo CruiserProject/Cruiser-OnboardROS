@@ -39,7 +39,7 @@ const float focal_length=20;//相机等效焦距
 //const float optic_angle=94;//相机视角
 
 float height;//定义全局变量，获取当前飞行高度
-static const std::string OPENCV_WINDOW = "landpoint";
+//static const std::string OPENCV_WINDOW = "landpoint";
 bool positionFlag=false;
 
 //get the local height of drone
@@ -76,12 +76,12 @@ class ImageConverter
 			Landing_flag=nh_.subscribe("cruiser/landing_flag",1,&landingFlagCallback);
 			delta_location=nh_.advertise<cruiser::DeltaPosition>("cruiser/landing_move",1);
 
-			cv::namedWindow(OPENCV_WINDOW);
+			//	cv::namedWindow(OPENCV_WINDOW);
 		}
 
 		~ImageConverter()
 		{
-			cv::destroyWindow(OPENCV_WINDOW);
+		//	cv::destroyWindow(OPENCV_WINDOW);
 		}
 
 		void imageCb(const sensor_msgs::ImageConstPtr& msg)
@@ -116,7 +116,7 @@ class ImageConverter
 				float  add_pointx = 0, add_pointy = 0; int size, add_radius = 0;
 				for( size_t i = 0; i < circles.size(); i++ )
 				{
-			  	Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+			  		Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
 					int radius = cvRound(circles[i][2]);
 					add_radius += radius;
 					add_pointx += cvRound(circles[i][0]);
@@ -145,8 +145,8 @@ class ImageConverter
 					deltaPosition.state=true;//if any circle is detected,the state should be true
 					Point center(x, y);
 					cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
-					circle(srcImage, center, 3, Scalar(0, 59, 255), -1, 8, 0);
-					circle(srcImage, center, radius, Scalar(155, 50, 20), 3, 8, 0);
+				//	circle(srcImage, center, 3, Scalar(0, 59, 255), -1, 8, 0);
+				//	circle(srcImage, center, radius, Scalar(155, 50, 20), 3, 8, 0);
 
 					//计算实际坐标（相对位移）
 					int X=srcImage.cols;
@@ -163,8 +163,8 @@ class ImageConverter
 					deltaPosition.delta_X_meter=x;
 					deltaPosition.delta_Y_meter=y;
 				}
-				cv::imshow(OPENCV_WINDOW, srcImage);
-				cv::waitKey(3);
+				//cv::imshow(OPENCV_WINDOW, srcImage);
+				//cv::waitKey(3);
 				// Output modified video stream
 				//cv_ptr->image=srcImage;
 				//image_pub_.publish(srcImage.toImageMsg());

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=LaunchROS
+Type=Application
+Exec=/home/ubuntu/Desktop/root.sh
+Terminal=true
+Categories=Application;Network;
+#X-GNOME-Autostart-enabled=true
