@@ -67,8 +67,8 @@ void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 {
 	ROS_INFO_STREAM("tracking_alg_node : coordinate transformed.");
 	//图像坐标原点转换为像素坐标
-	float v0=sensor_width/2;
-	float u0=sensor_height/2;
+	float u0=sensor_width/2;
+	float v0=sensor_height/2;
 
 	//计算fx.fy
 	float fx=focal_length/(sensor_width/640.0);

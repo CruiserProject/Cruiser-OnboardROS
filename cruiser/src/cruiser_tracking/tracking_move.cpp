@@ -43,11 +43,15 @@ void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 	if (new_location.state)
 	{
 		if((new_location.delta_X_meter < -99) && (new_location.delta_Y_meter < -99))
+		{
 			drone->gimbal_angle_control(0, -450, 0, 10);
+			usleep(10000);
+		}
+
 		else
 		{
 			drone->attitude_control(0x81,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
-			usleep(50000);
+			usleep(500000);
 		}
 
 	}

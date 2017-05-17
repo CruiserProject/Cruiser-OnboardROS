@@ -152,12 +152,20 @@ class ImageConverter
 					int X=srcImage.cols;
 					int Y=srcImage.rows;
 
+					float u0=sensor_weight/2;
+					float v0=sensor_height/2;
+
+					float fx=focal_length/(sensor_weight/X);
+					float fy=focal_length/(sensor_height/Y);
+
 					//coordinate transform
-					x=x/X;
-					y=y/Y;
+					x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*sin(0-atan((y-v0)/fy))));
+					y=height/tan(0-atan((y-v0)/fy));
+//					x=x/X;
+//					y=y/Y;
 					
-					x=(sensor_weight*0.001/2-x*sensor_weight*0.001)/(focal_length*0.001/height);
-					y=(sensor_height*0.001/2-y*sensor_height*0.001)/(focal_length*0.001/height);
+//					x=(x*sensor_weight*0.001-sensor_weight*0.001/2)/(focal_length*0.001/height);
+//					y=(y*sensor_height*0.001-sensor_height*0.001/2)/(focal_length*0.001/height);
 					ROS_INFO_STREAM("delta_X_meter = "<< x << " delta_Y_meter = " << y);
 
 					deltaPosition.delta_X_meter=x;

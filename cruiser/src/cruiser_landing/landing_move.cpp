@@ -36,13 +36,13 @@ public:
 		if(drone->gimbal_angle_control(0, -900, 0, 10))
 		{
 			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-			usleep(100000);
+			usleep(10000);
 		}
 
 		if (new_location.state)
 		{
-			drone->attitude_control(0x81,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
-			usleep(20000);
+			drone->attitude_control(0x82,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
+			usleep(200000);
 		}
 	//	float Height = 0;
 	//	if(drone->gimbal_angle_control(0, -900, 0, 10))
@@ -87,8 +87,8 @@ public:
 		this->local_height = cruiserdrone->GetHeightNow();
 		if(this->local_height > 1)
 		{
-			drone->attitude_control(0x81,0,0,0.2,0);//location
-			usleep(30000);
+			drone->attitude_control(0x82,0,0,0.2,0);//location
+			usleep(300000);
 		}
 		else
 		{
@@ -104,13 +104,7 @@ public:
 	{
 		this->delta_pos = flag;
 	}
-
 };
-
-
-
-
-
 
 int main(int argc,char **argv)
 {
@@ -134,7 +128,7 @@ int main(int argc,char **argv)
     		landing_move_node->SetDeltaPos(false);
     		if(drone->gimbal_angle_control(0, 0, 0, 10))
     			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-    		usleep(100000);
+    		usleep(10000);
     	}
         rate.sleep();
         ros::spinOnce();
