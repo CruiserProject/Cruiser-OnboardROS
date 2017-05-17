@@ -4,11 +4,9 @@
 #include <dji_sdk/dji_drone.h>
 
 
-DJIDrone *drone;
-CruiserDrone* cruiserdrone;
-
 class LandingMove
 {
+
 private:
 	ros::Subscriber DeltaMsg;
 	ros::Subscriber Height;
@@ -17,18 +15,24 @@ private:
 	float height_last = 0.0;
 
 public:
+
+	bool alti_flag = false;
+	bool delta_pos = false;
+	DJIDrone *drone;
+	CruiserDrone *cruiserdrone;
+
 	LandingMove(ros::NodeHandle& nh)
 	{
 		ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&LandingMove::DeltaMsgCallback,this);
 		ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1,&LandingMove::AutoHeightChanged,this);
+		drone = new DJIDrone(nh);
+		cruiserdrone = new CruiserDrone(nh);
 	}
 
 	~LandingMove()
 	{
 	//	cv::destroyWindow(OPENCV_WINDOW);
 	}
-	bool alti_flag = false;
-	bool delta_pos = false;
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 	{
@@ -36,13 +40,13 @@ public:
 		if(drone->gimbal_angle_control(0, -900, 0, 10))
 		{
 			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-			usleep(10000);
+			usleep(100000);
 		}
 
 		if (new_location.state)
 		{
 			drone->attitude_control(0x82,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
-			usleep(200000);
+			usleep(500000);
 		}
 	//	float Height = 0;
 	//	if(drone->gimbal_angle_control(0, -900, 0, 10))
@@ -88,7 +92,7 @@ public:
 		if(this->local_height > 1)
 		{
 			drone->attitude_control(0x82,0,0,0.2,0);//location
-			usleep(300000);
+			usleep(500000);
 		}
 		else
 		{
@@ -110,23 +114,22 @@ int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
-	if(drone->request_sdk_permission_control())
+	LandingMove *landing_move_node = new LandingMove(nh);
+	if(landing_move_node->drone->request_sdk_permission_control())
 		ROS_INFO_STREAM("landing_move_node : initialization and get control.");
 
 	ros::Rate rate(0.5);
-	LandingMove* landing_move_node = new LandingMove(nh);
-	drone = new DJIDrone(nh);
-	cruiserdrone = new CruiserDrone(nh);
+
     while(ros::ok())
     {
       	if(landing_move_node->alti_flag||landing_move_node->delta_pos)
     	{
-      		cruiserdrone->SendVtlLandingMsg();
-    		drone->landing();
-    		cruiserdrone->SendSucLandingMsg();
+      		landing_move_node->cruiserdrone->SendVtlLandingMsg();
+    		landing_move_node->drone->landing();
+    		landing_move_node->cruiserdrone->SendSucLandingMsg();
     		landing_move_node->SetAltiFlag(false);
     		landing_move_node->SetDeltaPos(false);
-    		if(drone->gimbal_angle_control(0, 0, 0, 10))
+    		if(landing_move_node->drone->gimbal_angle_control(0, 0, 0, 10))
     			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
     		usleep(10000);
     	}

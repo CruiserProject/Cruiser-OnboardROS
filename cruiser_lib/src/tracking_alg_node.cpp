@@ -41,6 +41,8 @@ const float sensor_height=4.55;
 const float focal_length=20; //相机等效焦距
 const float optic_angle=94; //相机视角
 const float degree=45; //相机与地面的夹角
+const float cols=640.0;//像素列数
+const float rows=360.0;//像素行数
 
 bool drawing_box = false;
 bool gotBB = false;
@@ -66,13 +68,15 @@ Mat capture;
 void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 {
 	ROS_INFO_STREAM("tracking_alg_node : coordinate transformed.");
+
 	//图像坐标原点转换为像素坐标
-	float u0=sensor_width/2;
-	float v0=sensor_height/2;
+	float u0=cols/2;
+	float v0=rows/2;
 
 	//计算fx.fy
-	float fx=focal_length/(sensor_width/640.0);
-	float fy=focal_length/(sensor_height/360.0);
+	float fx=focal_length/(sensor_width/cols);
+	float fy=focal_length/(sensor_height/rows);
+
     if(is_first_return)
     {
     	delta_x=-100.0;
@@ -82,7 +86,7 @@ void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
     else
 	//依据单目测距数学模型进行坐标转换
 	{
-    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*sin(degree-atan((y-v0)/fy))));
+    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(degree-atan((y-v0)/fy)));
     	delta_y=height/tan(degree-atan((y-v0)/fy));
 	}
 }
