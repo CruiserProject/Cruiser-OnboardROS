@@ -258,7 +258,7 @@ class ImageConverter
           box.x=x_lt*640;
           box.y=y_lt*360;
           box.width=(x_rb-x_lt)*640;
-          box.height=(y_rb-x_lt)*360;
+          box.height=(y_rb-y_lt)*360;
           tracker.init(box, capture);
           initFlag=true;
         }
