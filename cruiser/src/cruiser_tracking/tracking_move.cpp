@@ -12,12 +12,12 @@
 using namespace DJI;
 using namespace DJI::onboardSDK;
 
-void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
-
 DJIDrone *drone;
 
+void DeltaMsgCallback(const cruiser::DeltaPosition& new_location);
+void ChangeGimbalAngle(const cruiser::Flag &tracking_flag);
 
-bool tracking_flag = false;
+
 
 int main(int argc,char **argv)
 {
@@ -26,6 +26,7 @@ int main(int argc,char **argv)
 
 	drone = new DJIDrone(nh);
 	ros::Subscriber DeltaMsg = nh.subscribe("cruiser/tracking_move",1,&DeltaMsgCallback);
+	ros::Subscriber ChangeFlag = nh.subscribe("cruiser/tracking_flag",1,&ChangeGimbalAngle);		
     ros::Rate rate(2);
 
 	if(drone->request_sdk_permission_control())
@@ -38,21 +39,20 @@ int main(int argc,char **argv)
     }
 }
 
+void ChangeGimbalAngle(const cruiser::Flag &tracking_flag)
+{
+	if(tracking_flag.flag)
+	{
+		drone->gimbal_angle_control(0, -450, 0, 10);
+		usleep(100000);	
+	}
+}
+
 void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 {
 	if (new_location.state)
 	{
-		if((new_location.delta_X_meter < -99) && (new_location.delta_Y_meter < -99))
-		{
-			drone->gimbal_angle_control(0, -450, 0, 10);
-			usleep(10000);
-		}
-
-		else
-		{
-			drone->attitude_control(0x81,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
-			usleep(500000);
-		}
-
+		drone->attitude_control(0x81,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
+		usleep(500000);
 	}
 }

@@ -29,7 +29,7 @@
 
 using namespace std;
 using namespace cv;
-
+#define PI 3.14159265
 Mat srcImage;
 cruiser::DeltaPosition deltaPosition;
 
@@ -144,21 +144,21 @@ class ImageConverter
 					ROS_INFO_STREAM("landing_alg_node : detect circle.");
 					deltaPosition.state=true;//if any circle is detected,the state should be true
 					Point center(x, y);
-					cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
+				//	cout << "center=" << endl << center <<endl<< "radius=" << endl << radius<<endl;
 				//	circle(srcImage, center, 3, Scalar(0, 59, 255), -1, 8, 0);
 				//	circle(srcImage, center, radius, Scalar(155, 50, 20), 3, 8, 0);
-
+					ROS_INFO_STREAM("x: "<< x << " Y: " << y);
 					//计算实际坐标（相对位移）
 					float u0=srcImage.cols/2;//像素中心
 					float v0=srcImage.rows/2;
 
 					float fx=focal_length/(sensor_weight/srcImage.cols);
 					float fy=focal_length/(sensor_height/srcImage.rows);
-
+					ROS_INFO_STREAM(" f: "<< focal_length << " s_w:" << sensor_weight<<" s_h:"<<sensor_height);
 					//coordinate transform
-					x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(0-atan((y-v0)/fy)));
-					y=height/tan(0-atan((y-v0)/fy));
-
+					x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(PI/2-atan((y-v0)/fy)));
+					y=-height/tan(PI/2-atan((y-v0)/fy));
+					
 					ROS_INFO_STREAM("delta_X_meter = "<< x << " delta_Y_meter = " << y);
 
 					deltaPosition.delta_X_meter=x;

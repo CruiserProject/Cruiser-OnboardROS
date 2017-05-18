@@ -27,7 +27,7 @@ int main(int argc,char **argv)
 	ros::Publisher pub_tracking_flag = nh.advertise<cruiser::Flag>("cruiser/tracking_flag",1);
 	ros::Publisher pub_tracking_position = nh.advertise<cruiser::TrackingPosition>("cruiser/tracking_position",1);
 
-	ros::Rate rate(20);
+	ros::Rate rate(10);
 
 	ROS_INFO_STREAM("mobile_msg node initialization.");
 

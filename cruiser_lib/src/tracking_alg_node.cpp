@@ -35,7 +35,9 @@
 
 using namespace std;
 using namespace cv;
-bool is_first_return=false;    //返回给onboard进行相机调整
+
+#define PI 3.1415926
+
 const float sensor_width=6.17; //相机传感器尺寸参数
 const float sensor_height=4.55;
 const float focal_length=20; //相机等效焦距
@@ -77,18 +79,12 @@ void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
 	float fx=focal_length/(sensor_width/cols);
 	float fy=focal_length/(sensor_height/rows);
 
-    if(is_first_return)
-    {
-    	delta_x=-100.0;
-    	delta_y=-100.0;
-    	is_first_return=false;
-    }
-    else
+ 
 	//依据单目测距数学模型进行坐标转换
-	{
-    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(degree-atan((y-v0)/fy)));
-    	delta_y=height/tan(degree-atan((y-v0)/fy));
-	}
+	
+    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(degree/180*PI-atan((y-v0)/fy)));
+    	delta_y=-height/tan(degree/180*PI-atan((y-v0)/fy));
+	
 }
 /*void drawBox(Mat& image, CvRect box, Scalar color, int thick)
 {
@@ -143,13 +139,13 @@ void getFlagCallback(const cruiser::Flag &msg)
 	if(msg.flag)
 	{
 
-		is_first_return=true;
+		
 		startFlag=true;
 
 	}
 
 	else
-	{	is_first_return=false;
+	{	
 		positionFlag=false;
 		startFlag=false;
 		initFlag=false;
@@ -159,28 +155,28 @@ void getFlagCallback(const cruiser::Flag &msg)
 
 void getPositionCallback(const cruiser::TrackingPosition &msg)
 {
-	if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
+	if(msg.a_width_percent<=msg.b_width_percent&&msg.a_height_percent<=msg.b_height_percent)
 	{
 		x_lt=msg.a_width_percent;
 		y_lt=msg.a_height_percent;
 		x_rb=msg.b_width_percent;
 		y_rb=msg.b_height_percent;
 	}
-	else if(msg.a_width_percent>msg.b_width_percent&&msg.a_height_percent>msg.b_height_percent)
+	else if(msg.a_width_percent>=msg.b_width_percent&&msg.a_height_percent>=msg.b_height_percent)
 	{
 		x_lt=msg.b_width_percent;
 		y_lt=msg.b_height_percent;
 		x_rb=msg.a_width_percent;
 		y_rb=msg.a_height_percent;
 	}
-	else if(msg.a_width_percent<msg.b_width_percent&&msg.a_height_percent>msg.b_height_percent)
+	else if(msg.a_width_percent<=msg.b_width_percent&&msg.a_height_percent>=msg.b_height_percent)
 	{
 		x_lt=msg.a_width_percent;
 		y_lt=msg.b_height_percent;
 		x_rb=msg.b_width_percent;
 		y_rb=msg.a_height_percent;
 	}
-	else if(msg.a_width_percent>msg.b_width_percent&&msg.a_height_percent<msg.b_height_percent)
+	else if(msg.a_width_percent>=msg.b_width_percent&&msg.a_height_percent<=msg.b_height_percent)
 	{
 		x_lt=msg.b_width_percent;
 		y_lt=msg.a_height_percent;
@@ -188,6 +184,7 @@ void getPositionCallback(const cruiser::TrackingPosition &msg)
 		y_rb=msg.b_height_percent;
 	}
 	positionFlag=true;
+	ROS_INFO_STREAM("x_lt:"<<x_lt<<"y_lt"<<y_lt<<"x_rb:"<<x_rb<<"y_rb"<<y_rb);
 	ROS_INFO_STREAM("tracking_alg_node : get tracking position.");
 }
 
@@ -274,20 +271,12 @@ class ImageConverter
           //caluate the deltaPosition in the ground coordinate system
           trackingCoordCal(result.x+result.width/2,result.y+result.height/2,deltaPosition.delta_X_meter,deltaPosition.delta_Y_meter);
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
-         // rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
+          //rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
           //msg.a_width_percent msg.b_width_percent msg.a_height_percent msg.b_height_percent
           myPosition.a_width_percent=result.x/640.0;
           myPosition.a_height_percent=result.y/360.0;
           myPosition.b_width_percent=(result.x+result.width)/640.0;
           myPosition.b_height_percent=(result.y+result.height)/360.0;
-          //if(!SILENT)
-          //{
-          //  if (!capture.empty())
-          //  {
-          //    imshow(OPENCV_WINDOW, capture);
-          //    waitKey(10);
-          //  }
-          //}
           pub.publish(deltaPosition);
           ROS_INFO_STREAM("tracking_alg_node : publish delta position "
   				<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);

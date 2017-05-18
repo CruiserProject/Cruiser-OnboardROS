@@ -9,8 +9,6 @@ class LandingMove
 
 private:
 	ros::Subscriber DeltaMsg;
-	ros::Subscriber Height;
-	bool height_change_flag = false;
 	float local_height = 0.0;
 	float height_last = 0.0;
 
@@ -23,8 +21,7 @@ public:
 
 	LandingMove(ros::NodeHandle& nh)
 	{
-		ros::Subscriber DeltaMsg = nh.subscribe("cruiser/landing_move",1,&LandingMove::DeltaMsgCallback,this);
-		ros::Subscriber Height = nh.subscribe("/dji_sdk/local_position",1,&LandingMove::AutoHeightChanged,this);
+		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&LandingMove::DeltaMsgCallback,this);
 		drone = new DJIDrone(nh);
 		cruiserdrone = new CruiserDrone(nh);
 	}
@@ -36,8 +33,7 @@ public:
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 	{
-		this->height_change_flag = new_location.state;
-		if(drone->gimbal_angle_control(0, -900, 0, 10))
+		if(this->drone->gimbal_angle_control(0, -900, 0, 10))
 		{
 			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
 			usleep(100000);
@@ -45,8 +41,20 @@ public:
 
 		if (new_location.state)
 		{
-			drone->attitude_control(0x82,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
+			this->drone->attitude_control(0x82,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
 			usleep(500000);
+		}
+		
+		this->height_last = this->local_height;
+		this->local_height = this->cruiserdrone->GetHeightNow();
+		if(this->local_height > 1)
+		{
+			this->drone->attitude_control(0x82,0,0,-0.2,0);//location
+			usleep(500000);
+		}
+		else
+		{
+			if(abs(this->height_last - this->local_height) < 1)	this->alti_flag = true;
 		}
 	//	float Height = 0;
 	//	if(drone->gimbal_angle_control(0, -900, 0, 10))
@@ -85,21 +93,6 @@ public:
 	//	}
 	}
 
-	void AutoHeightChanged(const dji_sdk::LocalPosition& new_height)
-	{
-		this->height_last = this->local_height;
-		this->local_height = cruiserdrone->GetHeightNow();
-		if(this->local_height > 1)
-		{
-			drone->attitude_control(0x82,0,0,0.2,0);//location
-			usleep(500000);
-		}
-		else
-		{
-			if(abs(this->height_last - this->local_height) < 1)	this->alti_flag = true;
-		}
-	}
-
 	void SetAltiFlag(bool flag)
 	{
 		this->alti_flag = flag;
@@ -114,11 +107,12 @@ int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
+	
 	LandingMove *landing_move_node = new LandingMove(nh);
 	if(landing_move_node->drone->request_sdk_permission_control())
 		ROS_INFO_STREAM("landing_move_node : initialization and get control.");
 
-	ros::Rate rate(0.5);
+	ros::Rate rate(1);
 
     while(ros::ok())
     {
@@ -133,7 +127,7 @@ int main(int argc,char **argv)
     			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
     		usleep(10000);
     	}
-        rate.sleep();
         ros::spinOnce();
+        rate.sleep();
     }
 }
