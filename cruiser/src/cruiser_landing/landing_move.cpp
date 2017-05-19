@@ -15,7 +15,9 @@ private:
 public:
 
 	bool alti_flag = false;
-	bool delta_pos = false;
+	bool delta_pos = false;//changed the meaning
+	float delta_x_pos = 0;
+	float delta_y_pos = 0;
 	DJIDrone *drone;
 	CruiserDrone *cruiserdrone;
 
@@ -28,7 +30,8 @@ public:
 
 	~LandingMove()
 	{
-	//	cv::destroyWindow(OPENCV_WINDOW);
+		delete drone;
+		delete cruiserdrone;
 	}
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
@@ -36,13 +39,14 @@ public:
 		if(this->drone->gimbal_angle_control(0, -900, 0, 10))
 		{
 			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-			usleep(100000);
+			usleep(10000);
 		}
+		delta_pos = new_location.state;
 
 		if (new_location.state)
 		{
-			this->drone->attitude_control(0x82,new_location.delta_X_meter,new_location.delta_Y_meter,0,0);//location
-			usleep(500000);
+			this->delta_x_pos = new_location.delta_X_meter;
+			this->delta_y_pos = new_location.delta_Y_meter;
 		}
 		
 		this->height_last = this->local_height;
@@ -116,7 +120,9 @@ int main(int argc,char **argv)
 
     while(ros::ok())
     {
-      	if(landing_move_node->alti_flag||landing_move_node->delta_pos)
+		landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+		usleep(500000);
+      	if(landing_move_node->alti_flag)
     	{
       		landing_move_node->cruiserdrone->SendVtlLandingMsg();
     		landing_move_node->drone->landing();
