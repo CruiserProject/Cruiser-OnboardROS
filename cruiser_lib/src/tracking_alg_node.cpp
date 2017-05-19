@@ -82,9 +82,9 @@ void trackingCoordCal(float x,float y,float& delta_x,float& delta_y)
  
 	//依据单目测距数学模型进行坐标转换
 	
-    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(degree/180*PI-atan((y-v0)/fy)));
-    	delta_y=-height/tan(degree/180*PI-atan((y-v0)/fy));
-	
+    	delta_x=(x-u0)*height/(sqrt(fx*fx+(y-v0)*(y-v0))*sin(PI/4-atan((y-v0)/fy)));
+    	delta_y=height-height/tan(PI/4-atan((y-v0)/fy));
+	ROS_INFO_STREAM("deltax:  "<< delta_x << "  deltay:   " << delta_y);
 }
 /*void drawBox(Mat& image, CvRect box, Scalar color, int thick)
 {
@@ -184,7 +184,7 @@ void getPositionCallback(const cruiser::TrackingPosition &msg)
 		y_rb=msg.b_height_percent;
 	}
 	positionFlag=true;
-	ROS_INFO_STREAM("x_lt:"<<x_lt<<"y_lt"<<y_lt<<"x_rb:"<<x_rb<<"y_rb"<<y_rb);
+	//ROS_INFO_STREAM("x_lt:"<<x_lt<<"y_lt"<<y_lt<<"x_rb:"<<x_rb<<"y_rb"<<y_rb);
 	ROS_INFO_STREAM("tracking_alg_node : get tracking position.");
 }
 
@@ -270,6 +270,7 @@ class ImageConverter
 
           //caluate the deltaPosition in the ground coordinate system
           trackingCoordCal(result.x+result.width/2,result.y+result.height/2,deltaPosition.delta_X_meter,deltaPosition.delta_Y_meter);
+          ROS_INFO_STREAM("point_x: "<<result.x+result.width/2<<" point_y: "<<result.y+result.height/2);
           //cout << "target is located at: (" <<result.x<<","<<result.y<<")"<< endl;
           //rectangle(capture, Point(result.x, result.y), Point(result.x + result.width, result.y + result.height), Scalar(0, 0, 255), 1, 8);
           //msg.a_width_percent msg.b_width_percent msg.a_height_percent msg.b_height_percent
@@ -278,8 +279,8 @@ class ImageConverter
           myPosition.b_width_percent=(result.x+result.width)/640.0;
           myPosition.b_height_percent=(result.y+result.height)/360.0;
           pub.publish(deltaPosition);
-          ROS_INFO_STREAM("tracking_alg_node : publish delta position "
-  				<< deltaPosition.delta_X_meter << " " << deltaPosition.delta_Y_meter);
+          ROS_INFO_STREAM("REAL coordinate");
+          ROS_INFO_STREAM("rdeltax:  "<< deltaPosition.delta_X_meter << "  rdeltay:   " << deltaPosition.delta_Y_meter);
           pubs.publish(myPosition);
           ROS_INFO_STREAM("tracking_alg_node : publish delta position "
   				<< myPosition.a_width_percent << " " << myPosition.a_height_percent
@@ -295,8 +296,8 @@ int main(int argc, char** argv)
 	ImageConverter ic;
 	//cvSetMouseCallback("tracking", mouseHandler, NULL);
 	tracker=KCFTracker(HOG, FIXEDWINDOW, MULTISCALE, LAB);
-
 	ROS_INFO_STREAM("tracking_alg_node : initialization.");
+	
 	ros::spin();
 	return 0;
 }

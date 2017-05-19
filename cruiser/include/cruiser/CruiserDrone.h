@@ -43,6 +43,10 @@ public:
 			data_to_mobile[1] = 0x42;
 			this->float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
 			this->float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
+			if(Delta.delta_X_meter > 0)data_to_mobile[6] = 1;
+			else data_to_mobile[6] = 0;
+			if(Delta.delta_Y_meter > 0)data_to_mobile[7] = 1;
+			else data_to_mobile[7] = 0;		
 			SendMyDataToMobile(data_to_mobile);
 		}
 	}
@@ -56,6 +60,11 @@ public:
 			data_to_mobile[1] = 0x42;
 			this->float2char(Delta.delta_X_meter,data_to_mobile[2],data_to_mobile[3]);
 			this->float2char(Delta.delta_Y_meter,data_to_mobile[4],data_to_mobile[5]);
+			if(Delta.delta_X_meter >= 0)data_to_mobile[6] = 1;
+			else data_to_mobile[6] = 0;
+			if(Delta.delta_Y_meter >= 0)data_to_mobile[7] = 1;
+			else data_to_mobile[7] = 0;	
+			
 			SendMyDataToMobile(data_to_mobile);
 		}
 	}
@@ -110,8 +119,10 @@ public:
 
 	void float2char(float num, unsigned char& high, unsigned char& low)
 	{
-		high = (unsigned char)num;
-		low = (unsigned char)(num*100 - high*100);
+		int z=(int)num;
+		int x=(int)(fabs(num)*100 - abs(z)*100);
+		high = (unsigned char)z;
+		low  = (unsigned char)x;
 	}
 };
 
