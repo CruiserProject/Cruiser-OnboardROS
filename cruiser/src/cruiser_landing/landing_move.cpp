@@ -51,15 +51,16 @@ public:
 		
 		this->height_last = this->local_height;
 		this->local_height = this->cruiserdrone->GetHeightNow();
-		if(this->local_height > 1)
-		{
-			this->drone->attitude_control(0x82,0,0,-0.2,0);//location
-			usleep(500000);
-		}
-		else
-		{
-			if(abs(this->height_last - this->local_height) < 1)	this->alti_flag = true;
-		}
+		if((this->local_height < 1)&&(fabs(this->height_last - this->local_height) < 1))
+			this->alti_flag = true;
+//		{
+//			this->drone->attitude_control(0x82,0,0,-0.2,0);//location
+//			usleep(500000);
+//		}
+//		else
+//		{
+//			if(fabs(this->height_last - this->local_height) < 1)	this->alti_flag = true;
+//		}
 	//	float Height = 0;
 	//	if(drone->gimbal_angle_control(0, -900, 0, 10))
 	//		ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
@@ -120,8 +121,16 @@ int main(int argc,char **argv)
 
     while(ros::ok())
     {
-		landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+    	if(landing_move_node->delta_pos)
+    	{
+    		landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+    		usleep(500000);
+    		ROS_INFO_STREAM("drone moved.");
+    	}
+    	landing_move_node->drone->attitude_control(0x82,0,0,-0.2,0);//location
 		usleep(500000);
+		ROS_INFO_STREAM("altitude changed.");
+
       	if(landing_move_node->alti_flag)
     	{
       		landing_move_node->cruiserdrone->SendVtlLandingMsg();

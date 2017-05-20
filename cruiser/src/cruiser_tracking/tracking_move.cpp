@@ -18,6 +18,7 @@ private:
 public:
 
 	DJIDrone *drone;
+	bool delta_pos = false;
 	float delta_x_pos = 0;
 	float delta_y_pos = 0;
 
@@ -40,6 +41,7 @@ public:
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
 	{
+		this->delta_pos = new_location.state;
 		if (new_location.state)
 		{
 			this->delta_x_pos = new_location.delta_X_meter;
@@ -61,8 +63,11 @@ int main(int argc,char **argv)
 
     while(ros::ok())
     {
-    	landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
-    	usleep(500000);
+    	if(landing_move_node->delta_pos)
+    	{
+        	landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+        	usleep(500000);
+    	}
         ros::spinOnce();
         rate.sleep();
     }
