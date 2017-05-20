@@ -132,10 +132,11 @@ int main(int argc,char **argv)
     		landing_move_node->drone->attitude_control(0x80,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
     		usleep(500000);
     		ROS_INFO_STREAM("drone moved.");
-    	}
-    	landing_move_node->drone->attitude_control(0x80,0,0,-0.2,0);//location
-		usleep(500000);
-		ROS_INFO_STREAM("altitude changed.");
+    	
+    		landing_move_node->drone->attitude_control(0x80,0,0,-0.2,0);//location
+			usleep(500000);
+			ROS_INFO_STREAM("altitude changed.");
+		}
 
       	if(landing_move_node->alti_flag)
     	{

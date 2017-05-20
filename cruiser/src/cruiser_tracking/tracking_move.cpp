@@ -43,6 +43,13 @@ public:
 			this->drone->gimbal_angle_control(0, -450, 0, 10);
 			usleep(10000);
 		}
+		else
+		{
+	 		delta_x_pos = 0;
+			delta_y_pos = 0;
+    		if(this->drone->release_sdk_permission_control())
+	 			ROS_INFO_STREAM("landing_move_node : release and end control.");
+		}
 	}
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition &new_location)
@@ -69,6 +76,7 @@ int main(int argc,char **argv)
     	if(landing_move_node->delta_pos)
     	{
         	landing_move_node->drone->attitude_control(0x80,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+        	ROS_INFO_STREAM("drone moved.");
         	usleep(1000000);
     	}
         ros::spinOnce();
