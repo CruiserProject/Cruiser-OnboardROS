@@ -29,23 +29,29 @@ public:
 		ChangeFlag = nh.subscribe("cruiser/tracking_flag",1,&TrackingMove::ChangeGimbalAngle,this);
 	}
 
+	~TrackingMove()
+	{
+		delete drone;
+	}
 
 	void ChangeGimbalAngle(const cruiser::Flag &tracking_flag)
 	{
 		if(tracking_flag.flag)
 		{
+			if(this->drone->request_sdk_permission_control())
+				ROS_INFO_STREAM("tracking_move_node : initialization and get control.");
 			this->drone->gimbal_angle_control(0, -450, 0, 10);
 			usleep(10000);
 		}
 	}
 
-	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
+	void DeltaMsgCallback(const cruiser::DeltaPosition &new_location)
 	{
 		this->delta_pos = new_location.state;
 		if (new_location.state)
 		{
-			this->delta_x_pos = new_location.delta_X_meter;
-			this->delta_y_pos = new_location.delta_Y_meter;
+			this->delta_y_pos = new_location.delta_X_meter;//Note:North East Down
+			this->delta_x_pos = new_location.delta_Y_meter;
 		}
 	}
 
@@ -58,15 +64,12 @@ int main(int argc,char **argv)
 	TrackingMove *landing_move_node = new TrackingMove(nh);
     ros::Rate rate(1);
 
-	if(landing_move_node->drone->request_sdk_permission_control())
-		ROS_INFO_STREAM("tracking_move_node : initialization and get control.");
-
     while(ros::ok())
     {
     	if(landing_move_node->delta_pos)
     	{
-        	landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
-        	usleep(500000);
+        	landing_move_node->drone->attitude_control(0x80,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+        	usleep(1000000);
     	}
         ros::spinOnce();
         rate.sleep();

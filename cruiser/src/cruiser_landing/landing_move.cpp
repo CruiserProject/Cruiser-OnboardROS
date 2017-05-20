@@ -9,6 +9,7 @@ class LandingMove
 
 private:
 	ros::Subscriber DeltaMsg;
+	ros::Subscriber ControlFlag;
 	float local_height = 0.0;
 	float height_last = 0.0;
 
@@ -23,6 +24,7 @@ public:
 
 	LandingMove(ros::NodeHandle& nh)
 	{
+		ControlFlag = nh.subscribe("cruiser/landing_flag",1,&LandingMove::GetDroneControl,this);
 		DeltaMsg = nh.subscribe("cruiser/landing_move",1,&LandingMove::DeltaMsgCallback,this);
 		drone = new DJIDrone(nh);
 		cruiserdrone = new CruiserDrone(nh);
@@ -32,6 +34,13 @@ public:
 	{
 		delete drone;
 		delete cruiserdrone;
+	}
+
+	void GetDroneControl(const cruiser::Flag &landing_flag)
+	{
+		if(landing_flag.flag)
+			if(this->drone->request_sdk_permission_control())
+				ROS_INFO_STREAM("landing_move_node : initialization and get control.");
 	}
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
@@ -45,8 +54,8 @@ public:
 
 		if (new_location.state)
 		{
-			this->delta_x_pos = new_location.delta_X_meter;
-			this->delta_y_pos = new_location.delta_Y_meter;
+			this->delta_y_pos = new_location.delta_X_meter;//Note:north east down ,so x,y exchanged.
+			this->delta_x_pos = new_location.delta_Y_meter;
 		}
 		
 		this->height_last = this->local_height;
@@ -114,20 +123,17 @@ int main(int argc,char **argv)
 	ros::NodeHandle nh;
 	
 	LandingMove *landing_move_node = new LandingMove(nh);
-	if(landing_move_node->drone->request_sdk_permission_control())
-		ROS_INFO_STREAM("landing_move_node : initialization and get control.");
 
 	ros::Rate rate(1);
-
     while(ros::ok())
     {
     	if(landing_move_node->delta_pos)
     	{
-    		landing_move_node->drone->attitude_control(0x82,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+    		landing_move_node->drone->attitude_control(0x80,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
     		usleep(500000);
     		ROS_INFO_STREAM("drone moved.");
     	}
-    	landing_move_node->drone->attitude_control(0x82,0,0,-0.2,0);//location
+    	landing_move_node->drone->attitude_control(0x80,0,0,-0.2,0);//location
 		usleep(500000);
 		ROS_INFO_STREAM("altitude changed.");
 
@@ -141,6 +147,8 @@ int main(int argc,char **argv)
     		if(landing_move_node->drone->gimbal_angle_control(0, 0, 0, 10))
     			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
     		usleep(10000);
+    		if(landing_move_node->drone->release_sdk_permission_control())
+    			ROS_INFO_STREAM("landing_move_node : release and end control.");
     	}
         ros::spinOnce();
         rate.sleep();
