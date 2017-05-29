@@ -69,15 +69,15 @@ int main(int argc,char **argv)
 	ros::init(argc,argv,"tracking_move_node");
 	ros::NodeHandle nh;
 	TrackingMove *landing_move_node = new TrackingMove(nh);
-    ros::Rate rate(1);
+    ros::Rate rate(10);
+    int Kp = 1;
 
     while(ros::ok())
     {
     	if(landing_move_node->delta_pos)
     	{
-        	landing_move_node->drone->attitude_control(0x80,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
+        	landing_move_node->drone->attitude_control(0x80,Kp * landing_move_node->delta_x_pos,Kp * landing_move_node->delta_y_pos,0,0);//location
         	ROS_INFO_STREAM("drone moved.");
-        	usleep(1000000);
     	}
         ros::spinOnce();
         rate.sleep();

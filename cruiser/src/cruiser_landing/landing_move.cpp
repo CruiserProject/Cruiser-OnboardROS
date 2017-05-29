@@ -124,17 +124,15 @@ int main(int argc,char **argv)
 	
 	LandingMove *landing_move_node = new LandingMove(nh);
 
-	ros::Rate rate(1);
+	ros::Rate rate(10);
     while(ros::ok())
     {
     	if(landing_move_node->delta_pos)
     	{
     		landing_move_node->drone->attitude_control(0x80,landing_move_node->delta_x_pos,landing_move_node->delta_y_pos,0,0);//location
-    		usleep(500000);
     		ROS_INFO_STREAM("drone moved.");
     	
-    		landing_move_node->drone->attitude_control(0x80,0,0,-0.2,0);//location
-			usleep(500000);
+    		landing_move_node->drone->attitude_control(0x10,0,0,-0.2,0);//location
 			ROS_INFO_STREAM("altitude changed.");
 		}
 
@@ -145,9 +143,9 @@ int main(int argc,char **argv)
     		landing_move_node->cruiserdrone->SendSucLandingMsg();
     		landing_move_node->SetAltiFlag(false);
     		landing_move_node->SetDeltaPos(false);
-    		if(landing_move_node->drone->gimbal_angle_control(0, 0, 0, 10))
-    			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-    		usleep(10000);
+    	//	if(landing_move_node->drone->gimbal_angle_control(0, 0, 0, 10))
+    //			ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
+  //  		usleep(10000);
     		if(landing_move_node->drone->release_sdk_permission_control())
     			ROS_INFO_STREAM("landing_move_node : release and end control.");
     	}
