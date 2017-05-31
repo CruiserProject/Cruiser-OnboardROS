@@ -45,10 +45,10 @@ public:
 		}
 		else
 		{
-	 		delta_x_pos = 0;
-			delta_y_pos = 0;
+	 		delta_x_pos = 0.0;
+			delta_y_pos = 0.0;
     		if(this->drone->release_sdk_permission_control())
-	 			ROS_INFO_STREAM("landing_move_node : release and end control.");
+	 			ROS_INFO_STREAM("tracking_move_node : release and end control.");
 		}
 	}
 
@@ -68,15 +68,15 @@ int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"tracking_move_node");
 	ros::NodeHandle nh;
-	TrackingMove *landing_move_node = new TrackingMove(nh);
+	TrackingMove *tracking_move_node = new TrackingMove(nh);
     ros::Rate rate(10);
     int Kp = 1.1;
 
     while(ros::ok())
     {
-    	if(landing_move_node->delta_pos)
+    	if(tracking_move_node->delta_pos)
     	{
-        	landing_move_node->drone->attitude_control(0x8A,Kp * landing_move_node->delta_x_pos,Kp * landing_move_node->delta_y_pos,0,0);//location
+        	tracking_move_node->drone->attitude_control(0x8A,Kp * tracking_move_node->delta_x_pos,Kp * tracking_move_node->delta_y_pos,0,0);
         	ROS_INFO_STREAM("drone moved.");
     	}
         ros::spinOnce();

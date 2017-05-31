@@ -62,14 +62,14 @@ public:
 
 		if (new_location.state)
 		{
-			this->delta_y_pos = new_location.delta_X_meter;//Note:north east down ,so x,y exchanged.
-			this->delta_x_pos = new_location.delta_Y_meter;
+			delta_y_pos = new_location.delta_X_meter;//Note:north east down ,so x,y exchanged.
+			delta_x_pos = new_location.delta_Y_meter;
 		}
 		
-		this->height_last = this->local_height;
-		this->local_height = this->cruiserdrone->GetHeightNow();
-		if((this->local_height < 0.8)&&(fabs(this->height_last - this->local_height) < 0.8))
-			this->alti_flag = true;
+		height_last = local_height;
+		local_height = this->cruiserdrone->GetHeightNow();
+		if((local_height < 0.8)&&(fabs(height_last - local_height) < 0.8))
+			alti_flag = true;
 	}
 	
 	void SetAltiFlag(bool flag)
@@ -90,7 +90,7 @@ public:
 	}
 	float GetHight()
 	{
-		return this->local_height;
+		return local_height;
 	}
 };
 
@@ -100,7 +100,7 @@ int main(int argc,char **argv)
 	ros::NodeHandle nh;
 	
 	LandingMove *landing_move_node = new LandingMove(nh);
-	int Kp = 1.1;
+	int Kp = 1.5;
 
 	ros::Rate rate(2);
     while(ros::ok())
@@ -112,19 +112,25 @@ int main(int argc,char **argv)
 			//landing_move_node->drone->attitude_control(0x8A,0,0,-0.5,0);
 			//ROS_INFO_STREAM("landing_move_node : altitude changed.");
 		}
-		else
-		{
-			landing_move_node->drone->attitude_control(0x8A,0,0,-0.5,0);
-			ROS_INFO_STREAM("landing_move_node : Circles not found.");
-		}
+		//else
+		//{
+		//	landing_move_node->drone->attitude_control(0x8A,0,0,-0.5,0);
+		//	ROS_INFO_STREAM("landing_move_node : Circles not found.");
+		//}
 
       	if(landing_move_node->GetAltiFlag())
     	{
+    	    landing_move_node->cruiserdrone->SendVtlLandingMsg();
 			landing_move_node->drone->landing();
+			landing_move_node->SetAltiFlag(false);
+    		landing_move_node->SetDeltaPos(false);
+    		if(landing_move_node->drone->release_sdk_permission_control())
+				ROS_INFO_STREAM("landing_move_node : Releasing control and ending task.");
   			//landing_move_node->cruiserdrone->SendSucLandingMsg();
 			//if(landing_move_node->drone->gimbal_angle_control(0, 0, 0, 10))
 				//ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-    		landing_move_node->cruiserdrone->SendVtlLandingMsg();
+
+    		
 				//usleep(10000);
     	}
         ros::spinOnce();
