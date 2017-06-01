@@ -92,6 +92,10 @@ public:
 	{
 		return local_height;
 	}
+	float GetHightLast()
+	{
+		return height_last;
+	}
 };
 
 int main(int argc,char **argv)
@@ -109,29 +113,14 @@ int main(int argc,char **argv)
     	{
     		landing_move_node->drone->attitude_control(0x8A,Kp * landing_move_node->delta_x_pos,Kp * landing_move_node->delta_y_pos,-0.5,0);
     		ROS_INFO_STREAM("landing_move_node : Drone moved.");
-			//landing_move_node->drone->attitude_control(0x8A,0,0,-0.5,0);
-			//ROS_INFO_STREAM("landing_move_node : altitude changed.");
 		}
-		//else
-		//{
-		//	landing_move_node->drone->attitude_control(0x8A,0,0,-0.5,0);
-		//	ROS_INFO_STREAM("landing_move_node : Circles not found.");
-		//}
-
-      	if(landing_move_node->GetAltiFlag())
+    	if((landing_move_node->GetHight() <= 0.0)&&(landing_move_node->GetHightLast() <= 0.0))
     	{
-    	    landing_move_node->cruiserdrone->SendVtlLandingMsg();
-			landing_move_node->drone->landing();
+    		landing_move_node->cruiserdrone->SendSucLandingMsg();
 			landing_move_node->SetAltiFlag(false);
     		landing_move_node->SetDeltaPos(false);
     		if(landing_move_node->drone->release_sdk_permission_control())
 				ROS_INFO_STREAM("landing_move_node : Releasing control and ending task.");
-  			//landing_move_node->cruiserdrone->SendSucLandingMsg();
-			//if(landing_move_node->drone->gimbal_angle_control(0, 0, 0, 10))
-				//ROS_INFO_STREAM("landing_move_node : gimbal angle changed.");
-
-    		
-				//usleep(10000);
     	}
         ros::spinOnce();
         rate.sleep();

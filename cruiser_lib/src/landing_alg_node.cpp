@@ -135,7 +135,7 @@ class ImageConverter
 				if(x==0&&y==0)
 				{
 					ROS_INFO_STREAM("landing_alg_node : do not detect circle.");
-					deltaPosition.state=false;//there is no circle detected,so the state in deltaposition should be false
+					deltaPosition.state=true;//there is no circle detected
 					deltaPosition.delta_X_meter=0;
 					deltaPosition.delta_Y_meter=0;
 				}
