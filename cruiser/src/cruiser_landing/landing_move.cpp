@@ -12,7 +12,7 @@ private:
 	ros::Subscriber ControlFlag;
 	float local_height = 0.0;
 	float height_last = 0.0;
-	bool alti_flag = false;
+	bool alti_flag = true;
 	bool delta_pos = false;
 
 public:
@@ -39,16 +39,31 @@ public:
 	{
 		if(landing_flag.flag)
 		{
+			SetAltiFlag(true);
 			if(this->drone->request_sdk_permission_control())
 				ROS_INFO_STREAM("landing_move_node : Initialization and getting permission control.");
 		}
 		else
 		{
-			this->SetAltiFlag(false);
     		this->SetDeltaPos(false);
     		if(this->drone->release_sdk_permission_control())
 				ROS_INFO_STREAM("landing_move_node : Releasing control and ending task.");
 		}				
+	}
+	
+	void TaskFinish()
+	{
+		if(GetAltiFlag())
+		{
+			this->SetAltiFlag(false);		
+			cruiserdrone->SendSucLandingMsg();
+			drone->drone_disarm();
+			usleep(20000);
+			if(drone->release_sdk_permission_control())
+				ROS_INFO_STREAM("landing_move_node : Releasing control and ending task.");		
+		}
+
+	
 	}
 
 	void DeltaMsgCallback(const cruiser::DeltaPosition& new_location)
@@ -68,8 +83,6 @@ public:
 		
 		height_last = local_height;
 		local_height = this->cruiserdrone->GetHeightNow();
-		if((local_height < 0.8)&&(fabs(height_last - local_height) < 0.8))
-			alti_flag = true;
 	}
 	
 	void SetAltiFlag(bool flag)
@@ -102,7 +115,6 @@ int main(int argc,char **argv)
 {
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
-	
 	LandingMove *landing_move_node = new LandingMove(nh);
 	int Kp = 1.5;
 
@@ -113,15 +125,9 @@ int main(int argc,char **argv)
     	{
     		landing_move_node->drone->attitude_control(0x8A,Kp * landing_move_node->delta_x_pos,Kp * landing_move_node->delta_y_pos,-0.5,0);
     		ROS_INFO_STREAM("landing_move_node : Drone moved.");
+    		if((landing_move_node->GetHight() <= 0.0)&&(landing_move_node->GetHightLast() <= 0.0))
+				landing_move_node->TaskFinish();
 		}
-    	if((landing_move_node->GetHight() <= 0.0)&&(landing_move_node->GetHightLast() <= 0.0))
-    	{
-    		landing_move_node->cruiserdrone->SendSucLandingMsg();
-			landing_move_node->SetAltiFlag(false);
-    		landing_move_node->SetDeltaPos(false);
-    		if(landing_move_node->drone->release_sdk_permission_control())
-				ROS_INFO_STREAM("landing_move_node : Releasing control and ending task.");
-    	}
         ros::spinOnce();
         rate.sleep();
     }
