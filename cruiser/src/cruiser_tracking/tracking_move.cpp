@@ -70,13 +70,14 @@ int main(int argc,char **argv)
 	ros::NodeHandle nh;
 	TrackingMove *tracking_move_node = new TrackingMove(nh);
     ros::Rate rate(10);
-    int Kp = 1.1;
+    int Kpx = 1.3;
+    int Kpy = 1.5;
 
     while(ros::ok())
     {
     	if(tracking_move_node->delta_pos)
     	{
-        	tracking_move_node->drone->attitude_control(0x8A,Kp * tracking_move_node->delta_x_pos,Kp * tracking_move_node->delta_y_pos,0,0);
+        	tracking_move_node->drone->attitude_control(0x8A,Kpx * tracking_move_node->delta_x_pos,Kpy * tracking_move_node->delta_y_pos,0,0);
         	ROS_INFO_STREAM("drone moved.");
     	}
         ros::spinOnce();

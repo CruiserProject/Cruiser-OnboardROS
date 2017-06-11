@@ -118,9 +118,9 @@ int main(int argc,char **argv)
 	ros::init(argc,argv,"landing_move_node");
 	ros::NodeHandle nh;
 	LandingMove *landing_move_node = new LandingMove(nh);
-	int Kp = 1.5;
+	int Kp = 1.2;
 
-	ros::Rate rate(10);
+	ros::Rate rate(2);
     while(ros::ok())
     {
     	if(landing_move_node->GetDeltaPos())
