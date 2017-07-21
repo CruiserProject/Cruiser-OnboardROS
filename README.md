@@ -1,6 +1,8 @@
 # Cruiser-OnboardROS
 ## Introduction
 Onboard programs for Cruiser project.
+
+**For more details, please refer to [Cruiser-Documentation](https://github.com/CruiserProject/Cruiser-Documentation)**
 ## Collaborators
 - [@Cuijie12358](https://github.com/Cuijie12358)
 - [@hanzheteng](https://github.com/hanzheteng)
