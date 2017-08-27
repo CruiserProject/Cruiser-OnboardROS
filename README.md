@@ -19,5 +19,5 @@ Onboard programs for Cruiser project.
 - [DJI Matrice100](http://www.dji.com/matrice100)
 - [Manifold](http://www.dji.com/manifold) (Ubuntu 14.04)
 - [Robot Operating System](http://wiki.ros.org/) (indigo)
-- [Onboard-SDK-ROS v3.2.2](https://github.com/dji-sdk/Onboard-SDK-ROS)
+- [Onboard-SDK-ROS](https://github.com/dji-sdk/Onboard-SDK-ROS)(v3.2.2)
 
