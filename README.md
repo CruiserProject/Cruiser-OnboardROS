@@ -20,4 +20,10 @@ Onboard programs for Cruiser project.
 - [Manifold](http://www.dji.com/manifold) (Ubuntu 14.04)
 - [Robot Operating System](http://wiki.ros.org/) (indigo)
 - [Onboard-SDK-ROS](https://github.com/dji-sdk/Onboard-SDK-ROS)(v3.2.2)
+## Notice
+`.config` directory should have not been placed in this metapackage. It is just a demo to tell how to autostart when system boots. There are three files in this directory. The right usage is as follows:
+1. modify `launch.desktop` to and place it in `~/.config/autostart/`;
+2. modity `root.sh` (especially replace the passward) and put it on the Desktop; (if you do not need root privilege, you can skip this step and set the path in `launch.desktop` directly towards `launch.sh`)
+3. modity `launch.sh` and place it on the Desktop;
+4. reboot your system and see what happens.
 
