@@ -20,8 +20,7 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include </usr/include/opencv/cv.h>   //changed path
-#include </home/ubuntu/SAGACIOUS_EAGLE/src/Cruiser-OnboardROS/dji_sdk_read_cam/include/djicam.h>   //changed path
+#include <opencv/cv.h>
 
 #include <dji_sdk/LocalPosition.h>
 #include <cruiser/Flag.h>

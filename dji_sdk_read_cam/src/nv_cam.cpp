@@ -16,7 +16,7 @@
 #include <assert.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include </usr/include/opencv/cv.h>  //changed path
+#include <opencv/cv.h>
 #include "djicam.h"
 
 typedef unsigned char   BYTE;

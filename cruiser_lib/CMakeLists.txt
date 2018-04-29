@@ -158,12 +158,12 @@ add_dependencies(tracking_alg_node cruiser_generate_messages_cpp)
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
-target_link_libraries(landing_alg_node dcam ${catkin_LIBRARIES})
+target_link_libraries(landing_alg_node ${catkin_LIBRARIES})
 #target_link_libraries(
 # landing_alg_node
 #  dcam
 #  ${catkin_LIBRARIES})
-target_link_libraries(tracking_alg_node dcam ${catkin_LIBRARIES})
+target_link_libraries(tracking_alg_node ${catkin_LIBRARIES})
 #target_link_libraries(
 #  tracking_alg_node
 #  dcam
